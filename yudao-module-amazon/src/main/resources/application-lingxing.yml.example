@@ -1,0 +1,37 @@
+# 领星API配置示例
+# 请将此文件复制为 application-lingxing.yml 并填入正确的配置值
+
+amazon:
+  lingxing:
+    # 是否启用领星API
+    enabled: true
+    
+    # API域名（通常不需要修改）
+    api-domain: https://openapi.lingxing.com
+    
+    # 应用ID - 从领星开放平台获取
+    app-id: your_app_id_here
+    
+    # 应用Key - 通常与app-id相同，如有疑问请咨询领星客服
+    app-key: your_app_key_here
+    
+    # 应用密钥 - 从领星开放平台获取，请妥善保管
+    app-secret: your_app_secret_here
+    
+    # API请求超时时间（秒）
+    timeout-seconds: 30
+
+# 配置说明：
+# 1. app-id: 登录领星开放平台，在应用管理中查看
+# 2. app-key: 通常与app-id相同，部分场景可能不同，请参考平台文档
+# 3. app-secret: 用于API签名的密钥，请确保准确无误
+#
+# 常见问题：
+# - "app secret not correct": 检查app-secret是否正确
+# - "missing query param": 检查app-key是否配置
+# - 如果app-key与app-id相同，可以将两者设置为相同值
+#
+# 测试接口：
+# - 配置检查: GET /admin-api/amazon/lingxing/test/config
+# - 连接测试: GET /admin-api/amazon/lingxing/test/ping
+# - 获取Token: POST /admin-api/amazon/lingxing/token 

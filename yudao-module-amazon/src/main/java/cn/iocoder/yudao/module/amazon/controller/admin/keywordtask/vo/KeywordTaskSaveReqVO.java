@@ -9,22 +9,20 @@ import jakarta.validation.constraints.*;
 @Data
 public class KeywordTaskSaveReqVO {
 
-    @Schema(description = "ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "30685")
+    @Schema(description = "ID")
     private Long id;
 
-    @Schema(description = "用户ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "24987")
+    @Schema(description = "用户ID")
     private Long userId;
 
     @Schema(description = "任务名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "赵六")
     @NotEmpty(message = "任务名称不能为空")
     private String taskName;
 
-    @Schema(description = "关键词列表", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotNull(message = "关键词列表不能为空")
+    @Schema(description = "关键词列表")
     private List<String> keywords;
 
-    @Schema(description = "城市列表", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotNull(message = "城市列表不能为空")
+    @Schema(description = "城市列表")
     private List<String> cities;
 
     @Schema(description = "ASIN列表")
@@ -51,5 +49,8 @@ public class KeywordTaskSaveReqVO {
 
     @Schema(description = "结束时间")
     private String endTime;
+
+    @Schema(description = "爬虫类型", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String scraperType;
 
 }

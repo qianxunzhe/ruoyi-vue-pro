@@ -82,5 +82,5 @@ public class KeywordTaskDO extends BaseDO {
      */
     private LocalDateTime endTime;
 
-
+    private Integer scraperType;
 }

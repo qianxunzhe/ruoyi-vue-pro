@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(/Users/chengxiao/code/java/ruoyi-vue-pro/move_openapi_files.sh:*)",
+      "Bash(/Users/chengxiao/code/java/ruoyi-vue-pro/fix_imports.sh:*)",
+      "Bash(find:*)",
+      "Bash(rm:*)"
+    ],
+    "deny": []
+  }
+}

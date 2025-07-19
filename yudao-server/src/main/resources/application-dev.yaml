@@ -227,3 +227,4 @@ pf4j:
 
 amazon:
   keyword-task-url: https://amzapi.amzmoss.com/api/v1/amazon/run-now
+  listing-price-task-url: https://amzapi.amzmoss.com/api/v1/amazon/listing-price

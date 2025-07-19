@@ -29,11 +29,16 @@ public interface KeywordTaskMapper extends BaseMapperX<KeywordTaskDO> {
                 .eqIfPresent(KeywordTaskDO::getTaskType, reqVO.getTaskType())
                 .eqIfPresent(KeywordTaskDO::getShared, reqVO.getShared())
                 .eqIfPresent(KeywordTaskDO::getDescription, reqVO.getDescription())
+                .eqIfPresent(KeywordTaskDO::getScraperType, reqVO.getScraperType())
                 .betweenIfPresent(KeywordTaskDO::getCreateTime, reqVO.getCreateTime())
                 .orderByDesc(KeywordTaskDO::getId));
     }
 
     default void updateStatusById(KeywordTaskDO keywordTaskDO) {
+
+    }
+
+    default void selectList(KeywordTaskPageReqVO reqVO) {
 
     }
 

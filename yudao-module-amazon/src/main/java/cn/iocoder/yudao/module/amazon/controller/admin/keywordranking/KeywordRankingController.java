@@ -121,4 +121,13 @@ public class KeywordRankingController {
         ExcelUtils.write(response, fileName, "数据", KeywordRankingRespVO.class,resultList);
     }
 
+    @GetMapping("/analysis")
+    @Operation(summary = "获得关键词排名数据分析")
+    @PreAuthorize("@ss.hasPermission('amazon:keyword-ranking:query')")
+    @DataPermission(enable = true)
+    public CommonResult<KeywordRankingAnalysisRespVO> getKeywordRankingAnalysis(@Valid KeywordRankingAnalysisReqVO reqVO) {
+        KeywordRankingAnalysisRespVO result = keywordRankingService.getKeywordRankingAnalysis(reqVO);
+        return success(result);
+    }
+
 }

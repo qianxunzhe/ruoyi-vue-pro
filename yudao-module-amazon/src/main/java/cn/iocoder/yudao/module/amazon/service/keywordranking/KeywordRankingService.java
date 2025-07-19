@@ -58,4 +58,12 @@ public interface KeywordRankingService {
      */
     PageResult<KeywordRankingDO> getKeywordRankingPage(KeywordRankingPageReqVO pageReqVO);
 
+    /**
+     * 获得关键词排名数据分析
+     *
+     * @param reqVO 分析请求
+     * @return 分析结果
+     */
+    KeywordRankingAnalysisRespVO getKeywordRankingAnalysis(@Valid KeywordRankingAnalysisReqVO reqVO);
+
 }

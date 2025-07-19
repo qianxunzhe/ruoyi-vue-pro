@@ -47,4 +47,7 @@ public class KeywordTaskPageReqVO extends PageParam {
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime[] createTime;
 
+    @Schema(description = "爬虫类型")
+    private Short scraperType;
+
 }

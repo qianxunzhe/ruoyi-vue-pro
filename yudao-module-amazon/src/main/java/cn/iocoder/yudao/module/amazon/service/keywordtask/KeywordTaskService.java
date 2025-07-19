@@ -61,4 +61,27 @@ public interface KeywordTaskService {
      */
     PageResult<KeywordTaskDO> getKeywordTaskPage(KeywordTaskPageReqVO pageReqVO);
 
+
+
+    String handelPriceTask();
+
+    /**
+     * 传递任务id, 处理单个任务的价格。
+     * @param id
+     * @return
+     */
+    Boolean handelPriceTaskByTaskId(Long id);
+
+    /**
+     * 处理ASIN评论监控任务
+     * @return 处理结果
+     */
+    String handleReviewTask();
+
+    /**
+     * 处理单个任务的评论监控
+     * @param taskId 任务ID
+     * @return 处理结果
+     */
+    String handleSingleReviewTask(Long taskId);
 }

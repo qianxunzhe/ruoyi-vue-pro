@@ -93,6 +93,7 @@ public class KeywordTaskController {
     @PreAuthorize("@ss.hasPermission('amazon:keyword-task:query')")
     @DataPermission(enable = true)
     public CommonResult<PageResult<KeywordTaskRespVO>> getKeywordTaskPage(@Valid KeywordTaskPageReqVO pageReqVO) {
+        log.info("VO-------------:", JsonUtils.toJsonString(pageReqVO));
         PageResult<KeywordTaskDO> pageResult = keywordTaskService.getKeywordTaskPage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, KeywordTaskRespVO.class));
     }
