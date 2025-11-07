@@ -31,6 +31,8 @@ import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 import cn.iocoder.yudao.module.amazon.controller.admin.keywordasinranking.vo.*;
 import cn.iocoder.yudao.module.amazon.dal.dataobject.keywordasinranking.KeywordAsinRankingDO;
 import cn.iocoder.yudao.module.amazon.service.keywordasinranking.KeywordAsinRankingService;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Tag(name = "管理后台 - 关键词排名任务结果")
 @RestController
@@ -87,8 +89,25 @@ public class KeywordAsinRankingController {
     @Operation(summary = "获得关键词排名任务结果分页")
     @PreAuthorize("@ss.hasPermission('amazon:keyword-asin-ranking:query')")
     public CommonResult<PageResult<KeywordAsinRankingRespVO>> getKeywordAsinRankingPage(@Valid KeywordAsinRankingPageReqVO pageReqVO) {
+        // 处理时间范围
+        if (pageReqVO.getCrawlTime() == null) {
+            pageReqVO.setCrawlTime(new LocalDateTime[2]);
+        }
+        if (pageReqVO.getCrawlTime()[0] == null || pageReqVO.getCrawlTime()[1] == null) {
+            // 如果时间范围为空，则不进行时间过滤
+            pageReqVO.setCrawlTime(null);
+        }
+        
+        // 处理日期范围
+        if (pageReqVO.getCrawlDate() == null) {
+            pageReqVO.setCrawlDate(new LocalDate[2]);
+        }
+        if (pageReqVO.getCrawlDate()[0] == null || pageReqVO.getCrawlDate()[1] == null) {
+            // 如果日期范围为空，则不进行日期过滤
+            pageReqVO.setCrawlDate(null);
+        }
+        
         PageResult<KeywordAsinRankingDO> pageResult = keywordAsinRankingService.getKeywordAsinRankingPage(pageReqVO);
-
 
         PageResult<KeywordAsinRankingRespVO> rankingDOPageResult = BeanUtils.toBean(pageResult, KeywordAsinRankingRespVO.class);
         rankingDOPageResult.getList().forEach(item -> {

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.iocoder.yudao.module.amazon.dal.mysql.reviewsnapshots.ReviewSnapshotsMapper">
+
+    <!-- 定义 resultMap 以正确处理 JSONB 字段 -->
+    <resultMap id="reviewSnapshotsResultMap" type="cn.iocoder.yudao.module.amazon.dal.dataobject.reviewsnapshots.ReviewSnapshotsDO">
+        <id column="id" property="id"/>
+        <result column="asin" property="asin"/>
+        <result column="snapshot_date" property="snapshotDate"/>
+        <result column="spu" property="spu"/>
+        <result column="rating" property="rating"/>
+        <result column="ratings_count" property="ratingsCount"/>
+        <result column="reviews_count" property="reviewsCount"/>
+        <result column="star_distribution" property="starDistribution" 
+                typeHandler="cn.iocoder.yudao.module.amazon.framework.mybatis.type.JsonbTypeHandler"/>
+        <result column="review_star_counts" property="reviewStarCounts" 
+                typeHandler="cn.iocoder.yudao.module.amazon.framework.mybatis.type.JsonbTypeHandler"/>
+        <result column="review_star_percentages" property="reviewStarPercentages" 
+                typeHandler="cn.iocoder.yudao.module.amazon.framework.mybatis.type.JsonbTypeHandler"/>
+        <result column="user_id" property="userId"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="creator" property="creator"/>
+        <result column="create_time" property="createTime"/>
+        <result column="updater" property="updater"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+</mapper>

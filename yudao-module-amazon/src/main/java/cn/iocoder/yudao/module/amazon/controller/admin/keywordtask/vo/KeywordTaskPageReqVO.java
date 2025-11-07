@@ -49,5 +49,8 @@ public class KeywordTaskPageReqVO extends PageParam {
 
     @Schema(description = "爬虫类型")
     private Short scraperType;
+    
+    @Schema(description = "店铺ID", example = "100")
+    private Long shopId;
 
 }

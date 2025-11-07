@@ -1,0 +1,36 @@
+# Cloudflare R2 存储配置
+# 用于上传导出文件到 Cloudflare R2 并返回访问 URL
+
+cloudflare:
+  r2:
+    # 是否启用 R2 存储
+    enabled: false
+    
+    # R2 端点地址
+    # 格式: https://<account_id>.r2.cloudflarestorage.com
+    # 在 Cloudflare Dashboard -> R2 -> 管理 R2 API 令牌中可以找到
+    endpoint: https://your-account-id.r2.cloudflarestorage.com
+    
+    # 访问密钥
+    # 在 Cloudflare Dashboard -> R2 -> 管理 R2 API 令牌中创建
+    access-key: your-access-key-id
+    
+    # 密钥 Secret
+    # 创建 API 令牌时生成，请妥善保管
+    secret-key: your-secret-access-key
+    
+    # 存储桶名称
+    # 需要先在 Cloudflare Dashboard 中创建
+    bucket: your-bucket-name
+    
+    # 自定义域名（可选）
+    # 如果配置了自定义域名，返回的 URL 将使用此域名
+    # 例如: https://files.example.com
+    domain: 
+
+# 使用示例:
+# 1. 在 Cloudflare Dashboard 创建 R2 存储桶
+# 2. 创建 API 令牌，获取 Access Key ID 和 Secret Access Key
+# 3. 配置上述参数
+# 4. 将 enabled 设置为 true 启用功能
+# 5. 在 application.yml 中引入此配置: spring.profiles.include: r2

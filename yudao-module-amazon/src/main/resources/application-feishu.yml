@@ -1,0 +1,46 @@
+# 飞书机器人配置示例
+amazon:
+  feishu:
+    # 是否启用飞书通知
+    enabled: false
+    
+    # 默认webhook地址（请替换为实际的webhook地址）
+    default-webhook: https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    
+    # 超时时间（毫秒）
+    timeout: 5000
+    
+    # 重试次数
+    retry-times: 3
+    
+    # 重试间隔（毫秒）
+    retry-interval: 1000
+    
+    # 不同场景的webhook配置（可选，如果不配置则使用default-webhook）
+    webhooks:
+      # 任务完成通知
+      task-complete: https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+      
+      # 任务失败通知
+      task-failed: https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+      
+      # 错误通知
+      error-notification: https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+      
+      # 数据同步成功
+      data-sync-success: https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+      
+      # 数据同步失败
+      data-sync-failed: https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+      
+      # 关键词排名变化
+      keyword-ranking-change: https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+      
+      # 价格变动通知
+      price-change: https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+      
+      # 评论预警
+      review-alert: https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+      
+      # 利润报表通知
+      profit-report: https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx

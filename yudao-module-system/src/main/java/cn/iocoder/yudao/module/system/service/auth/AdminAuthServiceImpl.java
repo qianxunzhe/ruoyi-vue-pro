@@ -113,6 +113,19 @@ public class AdminAuthServiceImpl implements AdminAuthService {
         return createTokenAfterLoginSuccess(user.getId(), reqVO.getUsername(), LoginLogTypeEnum.LOGIN_USERNAME);
     }
 
+
+    @Override
+    public AuthLoginRespVO loginAmzmoss(AuthLoginReqVO reqVO) {
+
+        // 使用账号密码，进行登录
+        AdminUserDO user = authenticate(reqVO.getUsername(), reqVO.getPassword());
+
+        // 创建 Token 令牌，记录登录日志
+        return createTokenAfterLoginSuccess(user.getId(), reqVO.getUsername(), LoginLogTypeEnum.LOGIN_USERNAME);
+    }
+
+
+
     @Override
     public void sendSmsCode(AuthSmsSendReqVO reqVO) {
         // 如果是重置密码场景，需要校验图形验证码是否正确

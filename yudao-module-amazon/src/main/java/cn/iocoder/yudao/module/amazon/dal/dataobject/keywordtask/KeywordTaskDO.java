@@ -83,4 +83,14 @@ public class KeywordTaskDO extends BaseDO {
     private LocalDateTime endTime;
 
     private Integer scraperType;
+    
+    /**
+     * 店铺ID
+     */
+    private Long shopId;
+    
+    /**
+     * 产品
+     */
+    private String product;
 }

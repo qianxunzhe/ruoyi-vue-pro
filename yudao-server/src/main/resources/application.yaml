@@ -325,4 +325,26 @@ amazon:
     app-id: ak_Dh9THlQ1TX3Od
     app-secret: 6m9m41Pet0sILVvxFjQEZw==
     timeout-seconds: 30
-    # 注意：access-token和refresh-token通过SDK动态获取，不需要配置
+  feishu:
+    default-webhook: https://open.feishu.cn/open-apis/bot/v2/hook/689beb0b-9a9b-4466-8a1d-1061c6d6e7cf
+    enabled: true  # 是否启用飞书通知 # 默认webhook
+    timeout: 5000  # 超时时间（毫秒）
+    retry-times: 3  # 重试次数
+    retry-interval: 10000  # 重试间隔（毫秒）
+#    webhooks:  # 不同场景的webhook配置
+#      task-complete: https://open.feishu.cn/open-apis/bot/v2/hook/task-webhook
+#      error-notification: https://open.feishu.cn/open-apis/bot/v2/hook/error-webhook
+#      data-sync-success: https://open.feishu.cn/open-apis/bot/v2/hook/sync-webhook
+#      keyword-ranking-change: https://open.feishu.cn/open-apis/bot/v2/hook/ranking-webhook
+#      price-change: https://open.feishu.cn/open-apis/bot/v2/hook/price-webhook
+#      review-alert: https://open.feishu.cn/open-apis/bot/v2/hook/review-webhook
+
+
+cloudflare:
+  r2:
+    enabled: true  # 启用 R2 功能
+    endpoint: https://4e1ab27e9d0dac28c705b6086341b9c3.r2.cloudflarestorage.com/amzmoss
+    access-key: be0683c3af51fcdc950d0c4a03ffa232
+    secret-key: b8cb4434eb2a1feccaa1266c2e4ce94606134c36e5539b44de6069794d6b66f8
+    bucket: amzmoss
+    domain: https://amzmoss.einaey.com/amzmoss

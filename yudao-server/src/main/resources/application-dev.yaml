@@ -44,7 +44,7 @@ spring:
       primary: master
       datasource:
         master:
-          url: jdbc:postgresql://sh-postgres-581cfv0i.sql.tencentcdb.com:27463/ruoyi-vue-pro?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true # MySQL Connector/J 8.X 连接的示例
+          url: jdbc:postgresql://sh-postgres-581cfv0i.sql.tencentcdb.com:27463/ruoyi-vue-pro?reWriteBatchedInserts=true # PostgreSQL 批量插入优化
           username: admin
           password: PG_demons2025
 #        slave: # 模拟从库，可根据自己需要修改 # 模拟从库，可根据自己需要修改

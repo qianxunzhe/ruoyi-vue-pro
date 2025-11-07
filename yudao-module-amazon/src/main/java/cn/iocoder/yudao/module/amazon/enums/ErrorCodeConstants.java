@@ -22,4 +22,16 @@ public interface ErrorCodeConstants {
     ErrorCode LISTING_PRICE_NOT_EXISTS = new ErrorCode(1111000400, "价格监控结果不存在");
 
     ErrorCode ASIN_REVIEW_NOT_EXISTS = new ErrorCode(1111000500, "Amazon ASIN商品评论数据不存在");
+
+    ErrorCode SHOPS_NOT_EXISTS = new ErrorCode(1111000600, "亚马逊店铺信息不存在");
+    
+    ErrorCode KEYWORD_TASK_EXCEED_LIMIT = new ErrorCode(1111000700, "活跃任务数量超过限制，每个用户最多只能创建3个活跃任务");
+
+    ErrorCode PROFIT_REPORT_NOT_EXISTS = new ErrorCode(1111000800, "亚马逊利润报表数据不存在");
+
+    ErrorCode REVIEW_SNAPSHOTS_NOT_EXISTS = new ErrorCode(1111000900, "亚马逊评论快照不存在");
+
+    ErrorCode PRICE_RECORDS_NOT_EXISTS = new ErrorCode(1111001000, "亚马逊产品价格记录不存在");
+
+
 }

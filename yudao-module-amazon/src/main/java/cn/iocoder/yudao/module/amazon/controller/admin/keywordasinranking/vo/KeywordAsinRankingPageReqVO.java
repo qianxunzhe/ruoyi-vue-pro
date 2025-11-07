@@ -45,13 +45,13 @@ public class KeywordAsinRankingPageReqVO extends PageParam {
     @Schema(description = "广告类型", example = "2")
     private Short adsType;
 
-    @Schema(description = "采集时间")
+    @Schema(description = "采集时间范围")
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime[] crawlTime;
 
     @Schema(description = "爬取日期")
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
-    private LocalDate crawlDate;
+    private LocalDate[] crawlDate;
 
     @Schema(description = "备注信息", example = "你猜")
     private String remark;
@@ -62,5 +62,6 @@ public class KeywordAsinRankingPageReqVO extends PageParam {
 
     @Schema(description = "用户ID", example = "32458")
     private Long userId;
+
 
 }

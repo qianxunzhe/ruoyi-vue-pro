@@ -1,16 +1,6 @@
 package cn.iocoder.yudao.module.amazon.service.lingXingAPI;
 
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.AmazonStoreDTO;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.LingXingApiResponseDTO;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.ListingOperateLogDTO;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.ListingOperateLogQueryDTO;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.ListingOperateLogResponseDTO;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.AmazonListingDTO;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.AmazonListingQueryDTO;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.AmazonReviewDTO;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.AmazonReviewQueryDTO;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.ReviewReportDTO;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.ReviewReportQueryDTO;
+import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.*;
 
 import java.util.List;
 import java.util.Map;
@@ -156,4 +146,100 @@ public interface LingXingApiService {
      * @return 总Review数量
      */
     Integer getTotalReviewCount(String asin, Integer mid, String startDate, String endDate);
+    
+    /**
+     * 查询产品表现数据
+     * 
+     * @param queryParams 查询参数
+     * @return 产品表现数据响应
+     */
+    LingXingApiResponseDTO<ProductPerformanceResponseDTO> getProductPerformance(ProductPerformanceQueryDTO queryParams);
+    
+    /**
+     * 批量查询产品表现数据（支持超过50个ASIN的分批处理）
+     * 
+     * @param asinList ASIN列表，支持任意数量
+     * @param sidList 店铺ID列表
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     * @param summaryField 汇总维度
+     * @return 产品表现数据列表
+     */
+    List<ProductPerformanceDTO> getAllProductPerformance(List<String> asinList, List<Long> sidList, 
+                                                        String startDate, String endDate, String summaryField);
+    
+    /**
+     * 查询库存库龄数据
+     * 
+     * @param queryParams 查询参数
+     * @return 库存库龄数据响应
+     */
+    LingXingApiResponseDTO<FbaAgeListResponseDTO> getFbaAgeList(FbaAgeListQueryDTO queryParams);
+    
+    /**
+     * 批量查询库存库龄数据（支持多个店铺）
+     * 
+     * @param sidList 店铺ID列表
+     * @param offset 分页偏移量
+     * @param length 分页长度
+     * @return 库存库龄数据列表
+     */
+    List<FbaAgeListDTO> getAllFbaAgeList(List<Long> sidList, Integer offset, Integer length);
+    
+    /**
+     * 查询利润报表-ASIN维度
+     * 
+     * @param queryParams 查询参数
+     * @return 利润报表数据响应
+     */
+    LingXingApiResponseDTO<ProfitReportResponseDTO> queryProfitReport(ProfitReportQueryDTO queryParams);
+    
+    /**
+     * 批量查询利润报表数据（支持超过31天的分批处理）
+     * 
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     * @param sids 店铺ID列表
+     * @param asins ASIN列表
+     * @return 利润报表数据列表
+     */
+    List<ProfitReportDTO> getAllProfitReportData(String startDate, String endDate, 
+                                                  List<Long> sids, List<String> asins);
+    
+    /**
+     * 查询本地产品列表
+     * 
+     * @param queryParams 查询参数
+     * @return 产品列表响应
+     */
+    ProductListResponseDTO getProductList(ProductListQueryDTO queryParams);
+    
+    /**
+     * 批量查询所有产品列表数据（支持分页处理）
+     * 
+     * @return 所有产品列表数据
+     */
+    List<ProductListDTO> getAllProductList();
+    
+    /**
+     * 通过SKU查询SPU信息
+     * 
+     * @param sku SKU编码
+     * @return SPU信息，包含spu和productName
+     */
+    Map<String, String> getSpuBySku(String sku);
+    
+    /**
+     * 批量通过SKU查询SPU信息
+     * 
+     * @param skuList SKU列表
+     * @return SKU与SPU的映射关系
+     */
+    Map<String, Map<String, String>> getSpuBySkuBatch(List<String> skuList);
+    
+    /**
+     * 刷新SKU-SPU映射缓存
+     */
+    void refreshSkuSpuCache();
+    
 } 

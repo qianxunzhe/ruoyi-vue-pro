@@ -1,13 +1,20 @@
 package cn.iocoder.yudao.module.amazon.controller.admin.test;
 
 import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.poi.excel.ExcelUtil;
+import cn.hutool.poi.excel.ExcelWriter;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.iocoder.yudao.module.amazon.controller.admin.test.vo.AmazonListingVO;
 import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.AmazonListingDTO;
 import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.AmazonReviewQueryDTO;
 import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.LingXingApiResponseDTO;
+import cn.iocoder.yudao.module.amazon.enums.FeishuSceneEnum;
+import cn.iocoder.yudao.module.amazon.service.feishu.FeishuNotificationService;
 import cn.iocoder.yudao.module.amazon.service.lingXingAPI.LingXingApiService;
+import cn.iocoder.yudao.module.amazon.util.CloudflareR2Utils;
 import cn.iocoder.yudao.module.amazon.utils.LingXingTokenManager;
-import cn.iocoder.yudao.module.amazon.utils.LingXingJsonUtils;
+import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +28,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.constraints.*;
 import jakarta.validation.*;
 import jakarta.servlet.http.*;
+import java.io.ByteArrayOutputStream;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.io.IOException;
 
@@ -40,187 +50,222 @@ import cn.iocoder.yudao.module.amazon.dal.dataobject.listingprice.ListingPriceDO
 import cn.iocoder.yudao.module.amazon.service.listingprice.ListingPriceService;
 
 @Slf4j
-@Tag(name = "管理后台 - 领星API测试（优化版）")
+@Tag(name = "管理后台 - R2文件上传测试")
 @RestController
 @RequestMapping("/amazon/test")
 public class TestController {
 
     @Resource
-    private LingXingApiService lingXingApiService;
-    
+    private CloudflareR2Utils r2Utils;
+
     @Resource
-    private LingXingTokenManager tokenManager;
-
+    private FeishuNotificationService feishuNotificationService;
+    
     @PermitAll
-    @GetMapping("/list")
-    @Operation(summary = "获取美国正常店铺sid列表", description = "使用优化后的缓存机制")
-    public CommonResult getUSNormalStoreSids() {
-      List<Long> sidList = List.of(
-                9366L, 4970L, 10045L, 10049L, 10046L, 4975L,
-                4980L, 4982L, 10493L, 4986L, 4983L, 4965L,
-                4977L, 4972L, 9100L, 4985L, 10565L, 4966L,
-                9087L, 4976L, 10549L
-        );
-//        List<String> asinList = Arrays.asList(
-//            "B08NP4KYFT", "B0C32NTNCP","B0F3D6DL6Q","B0F3D3TW43","B0F3D14K7N","B0F3D3MFR1",
-//            "B0F3D4J8WH","B0F3D5QJ3Y","B0F3D6SWHR","B0F3D2ZF8M","B0F3D3CTP5","B0F3D46WQY",
-//            "B0F3D6TQFW","B0F3D58KW4","B0FDBH34HQ","B0FDBD5RS8"
-//        );
-        String asin = "B08WWQWNQD";
-//        Integer count = lingXingApiService.getAsinReviewCount(
-//                "B07XKHF683",
-//                "2023-10-01",
-//                "2025-07-10"
-//        );
+    @GetMapping("/upload-test-excel")
+    @Operation(summary = "测试Excel文件上传", description = "生成模拟Excel文件并上传到R2，返回带过期时间的公网URL")
+    public CommonResult<Map<String, Object>> testExcelUpload() {
+        try {
+            // 生成模拟Excel数据
+            ExcelWriter writer = ExcelUtil.getWriter(true);
+            
+            // 添加表头
+            writer.addHeaderAlias("id", "ID");
+            writer.addHeaderAlias("name", "商品名称");
+            writer.addHeaderAlias("sku", "SKU");
+            writer.addHeaderAlias("price", "价格");
+            writer.addHeaderAlias("stock", "库存");
+            writer.addHeaderAlias("createTime", "创建时间");
+            
+            // 生成模拟数据
+            List<Map<String, Object>> rows = new ArrayList<>();
+            for (int i = 1; i <= 100; i++) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("id", i);
+                row.put("name", "测试商品" + i);
+                row.put("sku", "SKU-" + IdUtil.fastSimpleUUID().substring(0, 8).toUpperCase());
+                row.put("price", Math.round(Math.random() * 1000 * 100) / 100.0);
+                row.put("stock", (int)(Math.random() * 1000));
+                row.put("createTime", DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
+                rows.add(row);
+            }
+            
+            // 写入数据
+            writer.write(rows, true);
+            
+            // 转换为字节数组
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            writer.flush(out);
+            byte[] excelBytes = out.toByteArray();
+            writer.close();
+            
+            // 生成文件名
+            String fileName = "test_data_" + DateUtil.format(new Date(), "yyyyMMddHHmmss");
+            
+            // 上传到R2并生成12小时有效的预签名URL
+            int durationHours = 12;
+            String url = r2Utils.uploadExcelWithPresignedUrl(excelBytes, fileName, durationHours);
+            
+            // 计算过期时间（12小时后）
+            LocalDateTime expireTime = LocalDateTime.now().plusHours(durationHours);
+            long expireTimestamp = expireTime.toInstant(ZoneOffset.of("+8")).toEpochMilli();
+            
+            // 构建返回结果
+            Map<String, Object> result = new HashMap<>();
+            result.put("url", url);
+            result.put("fileName", fileName + ".xlsx");
+            result.put("fileSize", excelBytes.length);
+            result.put("expireTime", DateUtil.format(Date.from(expireTime.toInstant(ZoneOffset.of("+8"))), "yyyy-MM-dd HH:mm:ss"));
+            result.put("expireTimestamp", expireTimestamp);
+            result.put("remainingHours", 12);
+            result.put("message", "Excel文件上传成功");
+            result.put("urlType", "custom_domain");  // 如果使用自定义域名
+            result.put("note", "使用自定义域名访问，需在Cloudflare R2中配置访问策略");
+            
+            log.info("Excel文件上传成功: {}", url);
+            String startDate = DateUtil.format(new Date(), "yyyy-MM-dd");
+            String endDate = DateUtil.format(new Date(), "yyyy-MM-dd");
+            int syncCount = 100;
+            // 6. 发送飞书成功通知
+            String successMessage = String.format(
+                    "✅ 测试数据，请忽略：利润报表同步成功\n\n" +
+                            "📅 日期范围：%s 至 %s\n" +
+                            "📈 同步记录数：%d\n" +
+                            "📁 文件数量：%d 个店铺\n" +
+                            "📎 下载地址：%s\n" +
+                            "⏰ 完成时间：%s",
 
-        // 更精细的查询控制
-        AmazonReviewQueryDTO query = new AmazonReviewQueryDTO();
-        query.setStartDate("2023-10-01");
-        query.setEndDate("2025-07-10");
-//        query.setStar("1,2");  // 只查1-2星差评
-        Integer badReviewCount = lingXingApiService.getAsinReviewCount(asin, query);
-        log.info("%s 评论数据为 %d", asin, badReviewCount);
-//        List<AmazonListingVO> resultList = BeanUtils.toBean(resList, AmazonListingVO.class);
+                    startDate, endDate, syncCount, 1,
+                    url, DateUtil.now()
+            );
 
-        return success(badReviewCount);
-    }
+            feishuNotificationService.sendTextMessage(successMessage, FeishuSceneEnum.PROFIT_REPORT);
 
-    @PermitAll
-    @GetMapping("/token/cache-test")
-    @Operation(summary = "缓存效果测试", description = "测试token缓存的性能提升")
-    public CommonResult testTokenCache() {
-        Map<String, Object> result = new HashMap<>();
-        
-        // 测试连续获取token的性能
-        long startTime = System.currentTimeMillis();
-        
-        // 第一次获取（可能需要从API获取）
-        long time1 = System.currentTimeMillis();
-        String token1 = tokenManager.getValidAccessToken();
-        long duration1 = System.currentTimeMillis() - time1;
-        
-        // 第二次获取（应该从缓存获取）
-        long time2 = System.currentTimeMillis();
-        String token2 = tokenManager.getValidAccessToken();
-        long duration2 = System.currentTimeMillis() - time2;
-        
-        // 第三次获取（应该从缓存获取）
-        long time3 = System.currentTimeMillis();
-        String token3 = tokenManager.getValidAccessToken();
-        long duration3 = System.currentTimeMillis() - time3;
-        
-        long totalTime = System.currentTimeMillis() - startTime;
-        
-        result.put("第一次获取耗时(ms)", duration1);
-        result.put("第二次获取耗时(ms)", duration2);
-        result.put("第三次获取耗时(ms)", duration3);
-        result.put("总耗时(ms)", totalTime);
-        result.put("缓存是否生效", duration2 < duration1 && duration3 < duration1);
-        result.put("token一致性", Objects.equals(token1, token2) && Objects.equals(token2, token3));
-        
-        // 获取token详细信息
-        Map<String, Object> tokenInfo = tokenManager.getTokenInfo();
-        if (tokenInfo != null) {
-            result.put("token信息", tokenInfo);
+
+
+
+            return success(result);
+            
+        } catch (Exception e) {
+            log.error("Excel文件上传失败", e);
+            return success(null);
         }
-        
-        return success(result);
     }
 
     @PermitAll
-    @PostMapping("/token/warm-up")
-    @Operation(summary = "预热token缓存", description = "预热缓存，提升后续访问性能")
-    public CommonResult warmUpCache() {
-        long startTime = System.currentTimeMillis();
-        
-        tokenManager.warmUpTokenCache();
-        
-        long duration = System.currentTimeMillis() - startTime;
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("预热耗时(ms)", duration);
-        result.put("预热结果", "成功");
-        
-        return success(result);
-    }
-
-    @PermitAll
-    @PostMapping("/token/force-refresh")
-    @Operation(summary = "强制刷新token", description = "强制刷新访问令牌并更新缓存")
-    public CommonResult forceRefreshToken() {
-        long startTime = System.currentTimeMillis();
-        
-        boolean success = tokenManager.forceRefreshToken();
-        
-        long duration = System.currentTimeMillis() - startTime;
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("刷新耗时(ms)", duration);
-        result.put("刷新结果", success ? "成功" : "失败");
-        
-        if (success) {
-            Map<String, Object> tokenInfo = tokenManager.getTokenInfo();
-            result.put("新token信息", tokenInfo);
+    @GetMapping("/upload-test-zip")
+    @Operation(summary = "测试ZIP文件上传", description = "生成多个模拟文件打包成ZIP并上传到R2，返回带过期时间的公网URL")
+    public CommonResult<Map<String, Object>> testZipUpload() {
+        try {
+            Map<String, byte[]> fileMap = new HashMap<>();
+            
+            // 生成Excel文件1 - 销售数据
+            ExcelWriter writer1 = ExcelUtil.getWriter(true);
+            List<Map<String, Object>> salesData = new ArrayList<>();
+            for (int i = 1; i <= 50; i++) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("日期", DateUtil.format(DateUtil.offsetDay(new Date(), -i), "yyyy-MM-dd"));
+                row.put("销售额", Math.round(Math.random() * 10000 * 100) / 100.0);
+                row.put("订单数", (int)(Math.random() * 100));
+                row.put("客单价", Math.round(Math.random() * 500 * 100) / 100.0);
+                salesData.add(row);
+            }
+            writer1.write(salesData, true);
+            ByteArrayOutputStream out1 = new ByteArrayOutputStream();
+            writer1.flush(out1);
+            fileMap.put("sales_data.xlsx", out1.toByteArray());
+            writer1.close();
+            
+            // 生成Excel文件2 - 库存数据
+            ExcelWriter writer2 = ExcelUtil.getWriter(true);
+            List<Map<String, Object>> inventoryData = new ArrayList<>();
+            for (int i = 1; i <= 30; i++) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("SKU", "SKU-" + IdUtil.fastSimpleUUID().substring(0, 8).toUpperCase());
+                row.put("仓库", "仓库" + (i % 3 + 1));
+                row.put("库存量", (int)(Math.random() * 1000));
+                row.put("安全库存", (int)(Math.random() * 100));
+                row.put("更新时间", DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
+                inventoryData.add(row);
+            }
+            writer2.write(inventoryData, true);
+            ByteArrayOutputStream out2 = new ByteArrayOutputStream();
+            writer2.flush(out2);
+            fileMap.put("inventory_data.xlsx", out2.toByteArray());
+            writer2.close();
+            
+            // 生成CSV文件 - 产品列表
+            StringBuilder csvContent = new StringBuilder();
+            csvContent.append("产品ID,产品名称,分类,价格,状态\n");
+            for (int i = 1; i <= 20; i++) {
+                csvContent.append(i).append(",")
+                         .append("产品").append(i).append(",")
+                         .append("分类").append(i % 5 + 1).append(",")
+                         .append(Math.round(Math.random() * 1000 * 100) / 100.0).append(",")
+                         .append(i % 2 == 0 ? "在售" : "下架").append("\n");
+            }
+            fileMap.put("product_list.csv", csvContent.toString().getBytes("UTF-8"));
+            
+            // 生成JSON文件 - 配置信息
+            Map<String, Object> config = new HashMap<>();
+            config.put("version", "1.0.0");
+            config.put("timestamp", System.currentTimeMillis());
+            config.put("environment", "test");
+            Map<String, Object> settings = new HashMap<>();
+            settings.put("autoSync", true);
+            settings.put("syncInterval", 3600);
+            settings.put("maxRetries", 3);
+            config.put("settings", settings);
+            String jsonContent = JsonUtils.toJsonString(config);
+            fileMap.put("config.json", jsonContent.getBytes("UTF-8"));
+            
+            // 生成TXT文件 - 说明文档
+            String readme = "测试数据包说明\n" +
+                           "================\n" +
+                           "生成时间: " + DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss") + "\n" +
+                           "包含文件:\n" +
+                           "1. sales_data.xlsx - 销售数据\n" +
+                           "2. inventory_data.xlsx - 库存数据\n" +
+                           "3. product_list.csv - 产品列表\n" +
+                           "4. config.json - 配置信息\n" +
+                           "5. README.txt - 本说明文件\n\n" +
+                           "注意：此为测试数据，仅供演示使用。";
+            fileMap.put("README.txt", readme.getBytes("UTF-8"));
+            
+            // 生成ZIP文件名
+            String zipName = "test_package_" + DateUtil.format(new Date(), "yyyyMMddHHmmss");
+            
+            // 上传ZIP文件并生成12小时有效的预签名URL
+            int durationHours = 12;
+            String url = r2Utils.uploadZipWithPresignedUrl(fileMap, zipName, durationHours);
+            
+            // 计算过期时间（12小时后）
+            LocalDateTime expireTime = LocalDateTime.now().plusHours(durationHours);
+            long expireTimestamp = expireTime.toInstant(ZoneOffset.of("+8")).toEpochMilli();
+            
+            // 计算总文件大小
+            long totalSize = fileMap.values().stream().mapToLong(bytes -> bytes.length).sum();
+            
+            // 构建返回结果
+            Map<String, Object> result = new HashMap<>();
+            result.put("url", url);
+            result.put("fileName", zipName + ".zip");
+            result.put("fileCount", fileMap.size());
+            result.put("fileList", fileMap.keySet());
+            result.put("totalSize", totalSize);
+            result.put("expireTime", DateUtil.format(Date.from(expireTime.toInstant(ZoneOffset.of("+8"))), "yyyy-MM-dd HH:mm:ss"));
+            result.put("expireTimestamp", expireTimestamp);
+            result.put("remainingHours", 12);
+            result.put("message", "ZIP文件上传成功，包含" + fileMap.size() + "个文件");
+            result.put("urlType", "custom_domain");  // 如果使用自定义域名
+            result.put("note", "使用自定义域名访问，需在Cloudflare R2中配置访问策略");
+            
+            log.info("ZIP文件上传成功: {}", url);
+            return success(result);
+            
+        } catch (Exception e) {
+            log.error("ZIP文件上传失败", e);
+            return success(null);
         }
-        
-        return success(result);
-    }
-
-    @PermitAll
-    @GetMapping("/token/status")
-    @Operation(summary = "检查token状态", description = "检查当前token的有效性和缓存状态")
-    public CommonResult checkTokenStatus() {
-        Map<String, Object> result = new HashMap<>();
-        
-        // 检查token有效性
-        boolean isValid = tokenManager.ensureTokenValid();
-        result.put("token有效性", isValid);
-        
-        // 获取token信息
-        Map<String, Object> tokenInfo = tokenManager.getTokenInfo();
-        if (tokenInfo != null) {
-            result.put("access_token", tokenInfo.get("access_token") != null ? "已获取" : "未获取");
-            result.put("refresh_token", tokenInfo.get("refresh_token") != null ? "已获取" : "未获取");
-            result.put("expires_in", tokenInfo.get("expires_in"));
-        }
-        
-        return success(result);
-    }
-
-    @PermitAll
-    @GetMapping("/performance-comparison")
-    @Operation(summary = "性能对比测试", description = "对比缓存前后的性能差异")
-    public CommonResult performanceComparison() {
-        Map<String, Object> result = new HashMap<>();
-        
-        // 测试多次连续调用的性能
-        int testCount = 10;
-        List<Long> durations = new ArrayList<>();
-        
-        long totalStartTime = System.currentTimeMillis();
-        
-        for (int i = 0; i < testCount; i++) {
-            long startTime = System.currentTimeMillis();
-            String token = tokenManager.getValidAccessToken();
-            long duration = System.currentTimeMillis() - startTime;
-            durations.add(duration);
-        }
-        
-        long totalTime = System.currentTimeMillis() - totalStartTime;
-        
-        // 计算统计信息
-        long minTime = durations.stream().mapToLong(Long::longValue).min().orElse(0);
-        long maxTime = durations.stream().mapToLong(Long::longValue).max().orElse(0);
-        double avgTime = durations.stream().mapToLong(Long::longValue).average().orElse(0);
-        
-        result.put("测试次数", testCount);
-        result.put("总耗时(ms)", totalTime);
-        result.put("平均耗时(ms)", String.format("%.2f", avgTime));
-        result.put("最小耗时(ms)", minTime);
-        result.put("最大耗时(ms)", maxTime);
-        result.put("每次耗时详情(ms)", durations);
-        result.put("缓存效果", maxTime > 100 && minTime < 10 ? "显著" : "一般");
-        
-        return success(result);
     }
 }

@@ -52,5 +52,11 @@ public class KeywordTaskSaveReqVO {
 
     @Schema(description = "爬虫类型", requiredMode = Schema.RequiredMode.REQUIRED)
     private String scraperType;
+    
+    @Schema(description = "店铺ID")
+    private Long shopId;
+    
+    @Schema(description = "产品")
+    private String product;
 
 }

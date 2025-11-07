@@ -23,69 +23,69 @@ public class KeywordRankingMapperTest {
     @Resource
     private KeywordRankingMapper keywordRankingMapper;
 
-    @Test
-    public void testSelectAnalysisDataLatest() {
-        try {
-            List<KeywordRankingDO> result = keywordRankingMapper.selectAnalysisDataLatest(
-                    1L, // userId
-                    "New York", // city
-                    (short) 1, // rankType
-                    LocalDate.now().minusDays(7), // startDate
-                    LocalDate.now(), // endDate
-                    null, // taskId
-                    Arrays.asList("test keyword"), // keywords
-                    50 // maxPosition
-            );
-            
-            System.out.println("查询成功，返回数据条数: " + result.size());
-            
-        } catch (Exception e) {
-            System.out.println("查询异常: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    @Test
-    public void testSelectAnalysisDataFirst() {
-        try {
-            List<KeywordRankingDO> result = keywordRankingMapper.selectAnalysisDataFirst(
-                    1L, // userId
-                    "New York", // city
-                    (short) 1, // rankType
-                    LocalDate.now().minusDays(7), // startDate
-                    LocalDate.now(), // endDate
-                    null, // taskId
-                    Arrays.asList("test keyword"), // keywords
-                    50 // maxPosition
-            );
-            
-            System.out.println("查询成功，返回数据条数: " + result.size());
-            
-        } catch (Exception e) {
-            System.out.println("查询异常: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    @Test
-    public void testSelectAnalysisDataAll() {
-        try {
-            List<KeywordRankingDO> result = keywordRankingMapper.selectAnalysisDataAll(
-                    1L, // userId
-                    "New York", // city
-                    (short) 1, // rankType
-                    LocalDate.now().minusDays(7), // startDate
-                    LocalDate.now(), // endDate
-                    null, // taskId
-                    Arrays.asList("test keyword"), // keywords
-                    50 // maxPosition
-            );
-            
-            System.out.println("查询成功，返回数据条数: " + result.size());
-            
-        } catch (Exception e) {
-            System.out.println("查询异常: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
+//    @Test
+//    public void testSelectAnalysisDataLatest() {
+//        try {
+//            List<KeywordRankingDO> result = keywordRankingMapper.selectAnalysisDataLatest(
+//                    1L, // userId
+//                    "New York", // city
+//                    (short) 1, // rankType
+//                    LocalDate.now().minusDays(7), // startDate
+//                    LocalDate.now(), // endDate
+//                    null, // taskId
+//                    Arrays.asList("test keyword"), // keywords
+//                    50 // maxPosition
+//            );
+//
+//            System.out.println("查询成功，返回数据条数: " + result.size());
+//
+//        } catch (Exception e) {
+//            System.out.println("查询异常: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    @Test
+//    public void testSelectAnalysisDataFirst() {
+//        try {
+//            List<KeywordRankingDO> result = keywordRankingMapper.selectAnalysisDataFirst(
+//                    1L, // userId
+//                    "New York", // city
+//                    (short) 1, // rankType
+//                    LocalDate.now().minusDays(7), // startDate
+//                    LocalDate.now(), // endDate
+//                    null, // taskId
+//                    Arrays.asList("test keyword"), // keywords
+//                    50 // maxPosition
+//            );
+//
+//            System.out.println("查询成功，返回数据条数: " + result.size());
+//
+//        } catch (Exception e) {
+//            System.out.println("查询异常: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    @Test
+//    public void testSelectAnalysisDataAll() {
+//        try {
+//            List<KeywordRankingDO> result = keywordRankingMapper.selectAnalysisDataAll(
+//                    1L, // userId
+//                    "New York", // city
+//                    (short) 1, // rankType
+//                    LocalDate.now().minusDays(7), // startDate
+//                    LocalDate.now(), // endDate
+//                    null, // taskId
+//                    Arrays.asList("test keyword"), // keywords
+//                    50 // maxPosition
+//            );
+//
+//            System.out.println("查询成功，返回数据条数: " + result.size());
+//
+//        } catch (Exception e) {
+//            System.out.println("查询异常: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
 }

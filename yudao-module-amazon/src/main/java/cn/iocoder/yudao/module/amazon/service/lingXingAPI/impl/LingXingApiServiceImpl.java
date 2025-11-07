@@ -8,18 +8,12 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import cn.iocoder.yudao.framework.common.util.http.HttpUtils;
 import cn.iocoder.yudao.module.amazon.config.LingXingConfig;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.AmazonStoreDTO;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.AmazonListingDTO;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.AmazonListingQueryDTO;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.LingXingApiResponseDTO;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.AmazonReviewDTO;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.AmazonReviewQueryDTO;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.ReviewReportDTO;
-import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.ReviewReportQueryDTO;
+import cn.iocoder.yudao.module.amazon.dal.dataobject.lingxing.*;
 import cn.iocoder.yudao.module.amazon.service.lingXingAPI.LingXingApiService;
 import cn.iocoder.yudao.module.amazon.utils.LingXingTokenManager;
 import cn.iocoder.yudao.module.amazon.utils.LingXingUtils;
 import cn.iocoder.yudao.module.amazon.utils.LingXingJsonUtils;
+import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.module.amazon.openapi.okhttp.AKRestClient;
 import cn.iocoder.yudao.module.amazon.openapi.core.Config;
 import cn.iocoder.yudao.module.amazon.openapi.entity.Result;
@@ -42,8 +36,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.CompletableFuture;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.stream.Collectors;
 
 /**
  * 领星API服务实现 - 优化版本
@@ -95,6 +91,17 @@ public class LingXingApiServiceImpl implements LingXingApiService {
         
         // 设置单例实例
         instance = this;
+        
+        // 异步初始化SKU-SPU缓存，避免阻塞启动
+        CompletableFuture.runAsync(() -> {
+            try {
+                Thread.sleep(10000); // 延迟10秒，等待系统完全启动
+                log.info("开始异步初始化SKU-SPU缓存");
+                refreshSkuSpuCache();
+            } catch (Exception e) {
+                log.warn("异步初始化SKU-SPU缓存失败: {}", e.getMessage());
+            }
+        });
     }
 
     @PreDestroy
@@ -1023,6 +1030,739 @@ public class LingXingApiServiceImpl implements LingXingApiService {
         } catch (Exception e) {
             log.error("获取ASIN [{}] 总Review数量异常", asin, e);
             return 0;
+        }
+    }
+    
+    @Override
+    public LingXingApiResponseDTO<ProductPerformanceResponseDTO> getProductPerformance(ProductPerformanceQueryDTO queryParams) {
+        log.info("开始查询产品表现数据");
+        
+        if (queryParams == null) {
+            throw new IllegalArgumentException("查询参数不能为空");
+        }
+        
+        // 验证必填参数
+        if (queryParams.getOffset() == null) {
+            queryParams.setOffset(0);
+        }
+        if (queryParams.getLength() == null) {
+            queryParams.setLength(20);
+        }
+        if (StrUtil.isBlank(queryParams.getSortField())) {
+            queryParams.setSortField("volume");
+        }
+        if (StrUtil.isBlank(queryParams.getSortType())) {
+            queryParams.setSortType("desc");
+        }
+        if (StrUtil.isBlank(queryParams.getSummaryField())) {
+            queryParams.setSummaryField("asin");
+        }
+        if (queryParams.getSid() == null) {
+            throw new IllegalArgumentException("店铺ID不能为空");
+        }
+        if (StrUtil.isBlank(queryParams.getStartDate()) || StrUtil.isBlank(queryParams.getEndDate())) {
+            throw new IllegalArgumentException("开始时间和结束时间不能为空");
+        }
+        
+        try {
+            // 将DTO转换为Map，过滤null值
+            Map<String, Object> requestBody = objectMapper.convertValue(queryParams, Map.class);
+            requestBody.values().removeIf(Objects::isNull);
+            
+            log.info("=== 产品表现查询请求详情 ===");
+            log.info("API路径: /bd/productPerformance/openApi/asinList");
+            log.info("请求参数: {}", JSONUtil.toJsonStr(requestBody));
+            
+            // 调用API
+            String response = sendPostRequest("/bd/productPerformance/openApi/asinList", requestBody);
+            log.info("=== 产品表现查询响应详情 ===");
+            log.info("响应原文: {}", response);
+            
+            // 先检查响应是否为空或格式错误
+            if (StrUtil.isBlank(response)) {
+                throw new RuntimeException("API响应为空");
+            }
+            
+            // 解析响应 - 修改为正确的类型
+            TypeReference<LingXingApiResponseDTO<ProductPerformanceResponseDTO>> typeRef = 
+                new TypeReference<LingXingApiResponseDTO<ProductPerformanceResponseDTO>>() {};
+            
+            LingXingApiResponseDTO<ProductPerformanceResponseDTO> result;
+            try {
+                result = objectMapper.readValue(response, typeRef);
+            } catch (Exception jsonException) {
+                log.error("JSON解析失败，响应内容: {}", response, jsonException);
+                throw new RuntimeException("API响应格式错误: " + jsonException.getMessage(), jsonException);
+            }
+            
+            if (result.getCode() == 0) {
+                ProductPerformanceResponseDTO data = result.getData();
+                log.info("成功获取产品表现数据，数量: {}, 总数: {}", 
+                    data != null && data.getList() != null ? data.getList().size() : 0, 
+                    data != null ? data.getTotal() : 0);
+            } else {
+                log.error("获取产品表现数据失败: code={}, message={}", result.getCode(), result.getMsg());
+                throw new RuntimeException("API返回错误: code=" + result.getCode() + ", message=" + result.getMsg());
+            }
+            
+            return result;
+        } catch (Exception e) {
+            log.error("查询产品表现数据异常，查询参数: {}", JSONUtil.toJsonStr(queryParams), e);
+            throw new RuntimeException("查询产品表现数据失败: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    public List<ProductPerformanceDTO> getAllProductPerformance(List<String> asinList, List<Long> sidList, 
+                                                               String startDate, String endDate, String summaryField) {
+        log.info("开始批量查询产品表现数据，ASIN数量: {}, 店铺数量: {}", 
+                asinList != null ? asinList.size() : 0, 
+                sidList != null ? sidList.size() : 0);
+        
+        if (asinList == null || asinList.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        List<ProductPerformanceDTO> allData = new ArrayList<>();
+        
+        // 每批最多处理50个ASIN
+        int batchSize = 50;
+        for (int i = 0; i < asinList.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, asinList.size());
+            List<String> batchAsins = asinList.subList(i, end);
+            
+            log.info("处理第 {} 批，ASIN数量: {}", (i / batchSize + 1), batchAsins.size());
+            
+            // 构建查询参数
+            ProductPerformanceQueryDTO queryParams = ProductPerformanceQueryDTO.builder()
+                .offset(0)
+                .length(10000) // 每批最大获取10000条
+                .sortField("volume")
+                .sortType("desc")
+                .searchField("asin")
+                .searchValue(batchAsins)
+                .sid(sidList)
+                .startDate(startDate)
+                .endDate(endDate)
+                .summaryField(summaryField != null ? summaryField : "asin")
+                .build();
+            
+            try {
+                LingXingApiResponseDTO<ProductPerformanceResponseDTO> response = getProductPerformance(queryParams);
+                
+                if (response.getCode() == 0 && response.getData() != null && response.getData().getList() != null) {
+                    allData.addAll(response.getData().getList());
+                    log.info("第 {} 批获取成功，数据量: {}", (i / batchSize + 1), response.getData().getList().size());
+                } else {
+                    log.error("第 {} 批获取失败: {}", (i / batchSize + 1), response.getMsg());
+                }
+                
+                // 避免请求过快，稍微延迟
+                if (end < asinList.size()) {
+                    try {
+                        Thread.sleep(1000); // 延迟1秒
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        log.warn("线程被中断", e);
+                    }
+                }
+            } catch (Exception e) {
+                log.error("处理第 {} 批时发生异常", (i / batchSize + 1), e);
+            }
+        }
+        
+        log.info("批量查询产品表现数据完成，总获取数据量: {}", allData.size());
+        return allData;
+    }
+    
+    @Override
+    public LingXingApiResponseDTO<FbaAgeListResponseDTO> getFbaAgeList(FbaAgeListQueryDTO queryParams) {
+        log.info("开始查询库存库龄数据，查询参数: {}", JSONUtil.toJsonStr(queryParams));
+        
+        try {
+            // 确保有有效的token
+            ensureValidToken();
+            
+            // 将DTO转换为Map
+            Map<String, Object> requestBody = new HashMap<>();
+            if (queryParams.getSid() != null) {
+                // sid是字符串类型，支持多个店铺ID用逗号分隔
+                requestBody.put("sid", queryParams.getSid());
+            }
+            if (queryParams.getOffset() != null) {
+                requestBody.put("offset", queryParams.getOffset());
+            }
+            if (queryParams.getLength() != null) {
+                requestBody.put("length", queryParams.getLength());
+            }
+            
+            // 调用领星API
+            String response = sendPostRequest("/erp/sc/routing/fba/fbaStock/getFbaAgeList", requestBody);
+            
+            log.debug("获取库存库龄数据响应: {}", response);
+            
+            // 解析响应为DTO
+            TypeReference<LingXingApiResponseDTO<FbaAgeListResponseDTO>> typeReference =
+                    new TypeReference<LingXingApiResponseDTO<FbaAgeListResponseDTO>>() {};
+            LingXingApiResponseDTO<FbaAgeListResponseDTO> result = objectMapper.readValue(response, typeReference);
+            
+            if (result.isSuccess()) {
+                log.info("成功获取库存库龄数据，数据总数: {}", 
+                    result.getData() != null && result.getData().getTotal() != null ? result.getData().getTotal() : 0);
+                
+                // 记录部分数据信息（调试用）
+                if (result.getData() != null && result.getData().getList() != null && !result.getData().getList().isEmpty()) {
+                    FbaAgeListDTO firstItem = result.getData().getList().get(0);
+                    log.debug("首条库存库龄数据: asin={}, sku={}, available={}, sid={}", 
+                        firstItem.getAsin(), firstItem.getSku(), firstItem.getAvailable(), firstItem.getSid());
+                }
+            } else {
+                log.error("获取库存库龄数据失败: code={}, message={}", result.getCode(), result.getMsg());
+            }
+            
+            return result;
+        } catch (Exception e) {
+            log.error("查询库存库龄数据异常", e);
+            throw new RuntimeException("查询库存库龄数据失败: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    public List<FbaAgeListDTO> getAllFbaAgeList(List<Long> sidList, Integer offset, Integer length) {
+        log.info("开始批量查询库存库龄数据，店铺数量: {}", sidList != null ? sidList.size() : 0);
+        
+        if (sidList == null || sidList.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        List<FbaAgeListDTO> allData = new ArrayList<>();
+        
+        // 每次请求的默认分页参数
+        int defaultOffset = offset != null ? offset : 0;
+        int defaultLength = length != null ? length : 1000; // 默认每次获取1000条
+        
+        // 将店铺ID列表转换为逗号分隔的字符串
+        String sidString = sidList.stream()
+            .map(String::valueOf)
+            .collect(java.util.stream.Collectors.joining(","));
+        
+        // 构建查询参数
+        FbaAgeListQueryDTO queryParams = FbaAgeListQueryDTO.builder()
+            .sid(sidString)
+            .offset(defaultOffset)
+            .length(defaultLength)
+            .build();
+        
+        try {
+            LingXingApiResponseDTO<FbaAgeListResponseDTO> response = getFbaAgeList(queryParams);
+            
+            if (response.isSuccess() && response.getData() != null && response.getData().getList() != null) {
+                allData.addAll(response.getData().getList());
+                log.info("成功获取库存库龄数据，数据量: {}", response.getData().getList().size());
+                
+                // 如果数据量等于请求的长度，可能还有更多数据，需要分页获取
+                int totalCount = response.getData().getTotal() != null ? response.getData().getTotal() : 0;
+                int currentCount = response.getData().getList().size();
+                
+                // 循环获取剩余数据
+                while (currentCount < totalCount && allData.size() < totalCount) {
+                    defaultOffset += defaultLength;
+                    queryParams.setOffset(defaultOffset);
+                    
+                    log.info("继续获取下一页数据，offset: {}", defaultOffset);
+                    
+                    response = getFbaAgeList(queryParams);
+                    if (response.isSuccess() && response.getData() != null && response.getData().getList() != null) {
+                        allData.addAll(response.getData().getList());
+                        currentCount += response.getData().getList().size();
+                        log.info("获取第 {} 页数据成功，当前总数据量: {}", (defaultOffset / defaultLength + 1), allData.size());
+                    } else {
+                        log.warn("获取第 {} 页数据失败", (defaultOffset / defaultLength + 1));
+                        break;
+                    }
+                    
+                    // 避免请求过快
+                    try {
+                        Thread.sleep(500); // 延迟500毫秒
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        log.warn("线程被中断", e);
+                        break;
+                    }
+                }
+            } else {
+                log.error("获取库存库龄数据失败: {}", response.getMsg());
+            }
+        } catch (Exception e) {
+            log.error("批量查询库存库龄数据异常", e);
+        }
+        
+        log.info("批量查询库存库龄数据完成，总获取数据量: {}", allData.size());
+        return allData;
+    }
+    
+    @Override
+    public LingXingApiResponseDTO<ProfitReportResponseDTO> queryProfitReport(ProfitReportQueryDTO queryParams) {
+        String path = "/bd/profit/report/open/report/asin/list";
+        
+        // 将DTO转换为Map
+        Map<String, Object> bodyMap = new HashMap<>();
+        if (queryParams.getOffset() != null) {
+            bodyMap.put("offset", queryParams.getOffset());
+        }
+        if (queryParams.getLength() != null) {
+            bodyMap.put("length", queryParams.getLength());
+        }
+        if (queryParams.getMids() != null) {
+            bodyMap.put("mids", queryParams.getMids());
+        }
+        if (queryParams.getSids() != null) {
+            bodyMap.put("sids", queryParams.getSids());
+        }
+        if (queryParams.getMonthlyQuery() != null) {
+            bodyMap.put("monthlyQuery", queryParams.getMonthlyQuery());
+        }
+        if (queryParams.getStartDate() != null) {
+            bodyMap.put("startDate", queryParams.getStartDate());
+        }
+        if (queryParams.getEndDate() != null) {
+            bodyMap.put("endDate", queryParams.getEndDate());
+        }
+        if (queryParams.getSearchField() != null) {
+            bodyMap.put("searchField", queryParams.getSearchField());
+        }
+        if (queryParams.getSearchValue() != null) {
+            bodyMap.put("searchValue", queryParams.getSearchValue());
+        }
+        if (queryParams.getCurrencyCode() != null) {
+            bodyMap.put("currencyCode", queryParams.getCurrencyCode());
+        }
+        if (queryParams.getSummaryEnabled() != null) {
+            bodyMap.put("summaryEnabled", queryParams.getSummaryEnabled());
+        }
+        if (queryParams.getOrderStatus() != null) {
+            bodyMap.put("orderStatus", queryParams.getOrderStatus());
+        }
+        
+        log.info("========== 利润报表API请求 ==========");
+        log.info("请求路径: {}", path);
+        log.info("请求参数: {}", JSONUtil.toJsonStr(bodyMap));
+        
+        String result = sendPostRequest(path, bodyMap);
+        
+        log.info("========== 利润报表API响应 ==========");
+        log.info("响应原始数据: {}", result);
+        
+        try {
+            LingXingApiResponseDTO<ProfitReportResponseDTO> response = objectMapper.readValue(result,
+                new TypeReference<LingXingApiResponseDTO<ProfitReportResponseDTO>>() {});
+            
+            if (response.getCode() != 0) {
+                log.error("查询利润报表失败: {}", response.getMsg());
+            } else {
+                log.info("解析成功，返回数据条数: {}", 
+                    response.getData() != null && response.getData().getRecords() != null 
+                    ? response.getData().getRecords().size() : 0);
+                
+                // 验证otherFeeStr是否正确反序列化
+                if (response.getData() != null && response.getData().getRecords() != null) {
+                    for (ProfitReportDTO dto : response.getData().getRecords()) {
+                        if (dto.getOtherFeeStr() != null && !dto.getOtherFeeStr().isEmpty()) {
+                            log.info("API解析成功 - ASIN: {}, otherFeeStr size: {}, content: {}", 
+                                dto.getAsin(), dto.getOtherFeeStr().size(), 
+                                JSONUtil.toJsonStr(dto.getOtherFeeStr()));
+                            break; // 只打印第一条有数据的记录
+                        }
+                    }
+                }
+            }
+            
+            return response;
+        } catch (Exception e) {
+            log.error("解析利润报表响应失败", e);
+            throw new RuntimeException("解析利润报表响应失败", e);
+        }
+    }
+    
+    @Override
+    public List<ProfitReportDTO> getAllProfitReportData(String startDate, String endDate, 
+                                                        List<Long> sids, List<String> asins) {
+        List<ProfitReportDTO> allData = new ArrayList<>();
+        
+        try {
+            // 计算日期差
+            java.time.LocalDate start = java.time.LocalDate.parse(startDate);
+            java.time.LocalDate end = java.time.LocalDate.parse(endDate);
+            long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(start, end);
+            
+            // 如果日期跨度超过31天，需要分批处理
+            java.time.LocalDate currentStart = start;
+            while (!currentStart.isAfter(end)) {
+                // 计算批次结束日期（最多31天）
+                java.time.LocalDate batchEnd = currentStart.plusDays(30);
+                if (batchEnd.isAfter(end)) {
+                    batchEnd = end;
+                }
+                
+                // 处理ASIN列表（如果超过10个需要分批）
+                if (CollUtil.isNotEmpty(asins)) {
+                    List<List<String>> asinBatches = CollUtil.split(asins, 10);
+                    for (List<String> asinBatch : asinBatches) {
+                        fetchProfitReportBatch(currentStart.toString(), batchEnd.toString(), 
+                                             sids, asinBatch, allData);
+                    }
+                } else {
+                    fetchProfitReportBatch(currentStart.toString(), batchEnd.toString(), 
+                                         sids, null, allData);
+                }
+                
+                currentStart = batchEnd.plusDays(1);
+            }
+            
+        } catch (Exception e) {
+            log.error("批量查询利润报表数据异常", e);
+        }
+        
+        log.info("批量查询利润报表完成，总获取数据量: {}", allData.size());
+        return allData;
+    }
+    
+    private void fetchProfitReportBatch(String startDate, String endDate, 
+                                       List<Long> sids, List<String> asins, 
+                                       List<ProfitReportDTO> allData) {
+        int offset = 0;
+        int pageSize = 10000;
+        boolean hasMore = true;
+        
+        while (hasMore) {
+            ProfitReportQueryDTO queryParams = ProfitReportQueryDTO.builder()
+                .startDate(startDate)
+                .endDate(endDate)
+                .sids(sids)
+                .searchField(CollUtil.isNotEmpty(asins) ? "asin" : null)
+                .searchValue(asins)
+                .offset(offset)
+                .length(pageSize)
+                .monthlyQuery(false)
+                .currencyCode("USD")
+                .orderStatus("Disbursed").summaryEnabled(true)
+                .build();
+            
+            try {
+                LingXingApiResponseDTO<ProfitReportResponseDTO> response = queryProfitReport(queryParams);
+                
+                if (response.getCode() == 0 && response.getData() != null) {
+                    ProfitReportResponseDTO data = response.getData();
+                    
+                    // 添加更详细的日志，记录总数和返回的ASIN列表
+                    log.info("领星API响应 - 总记录数: {}, 当前页记录数: {}", 
+                            data.getTotal(), 
+                            data.getRecords() != null ? data.getRecords().size() : 0);
+                    
+                    if (CollUtil.isNotEmpty(data.getRecords())) {
+                        // 记录返回的ASIN列表
+                        List<String> returnedAsins = data.getRecords().stream()
+                            .map(ProfitReportDTO::getAsin)
+                            .distinct()
+                            .collect(Collectors.toList());
+                        log.info("本页返回的ASIN列表: {}", returnedAsins);
+                        
+                        allData.addAll(data.getRecords());
+                        log.info("获取利润报表数据: {} 至 {}, 第 {} 页, 获取 {} 条, 累计 {} 条",
+                               startDate, endDate, (offset / pageSize + 1), data.getRecords().size(), allData.size());
+                        
+                        // 检查是否还有更多数据
+                        // 应该使用total字段来判断，而不是仅依赖返回数量
+                        if (data.getTotal() != null && offset + data.getRecords().size() >= data.getTotal()) {
+                            log.info("已获取所有数据，总计 {} 条", data.getTotal());
+                            hasMore = false;
+                        } else if (data.getRecords().size() < pageSize) {
+                            log.info("返回数量少于页大小，可能已无更多数据");
+                            hasMore = false;
+                        } else {
+                            offset += pageSize;
+                            log.info("准备获取下一页，offset: {}", offset);
+                        }
+                    } else {
+                        log.info("未返回数据，停止查询");
+                        hasMore = false;
+                    }
+                    
+                    // 避免请求过快
+                    Thread.sleep(500);
+                } else {
+                    log.warn("获取利润报表数据失败: {}", response.getMsg());
+                    hasMore = false;
+                }
+            } catch (Exception e) {
+                log.error("获取利润报表批次数据异常", e);
+                hasMore = false;
+            }
+        }
+    }
+    
+    /**
+     * SKU-SPU映射缓存，key为SKU，value包含spu和productName
+     */
+    private final Map<String, Map<String, String>> skuSpuCache = new HashMap<>();
+    
+    /**
+     * 缓存锁，确保缓存更新的线程安全
+     */
+    private final ReentrantLock cacheLock = new ReentrantLock();
+    
+    @Override
+    public ProductListResponseDTO getProductList(ProductListQueryDTO queryParams) {
+        log.info("开始查询产品列表");
+        
+        if (queryParams == null) {
+            queryParams = new ProductListQueryDTO();
+        }
+        
+        // 设置默认值
+        if (queryParams.getOffset() == null) {
+            queryParams.setOffset(0);
+        }
+        if (queryParams.getLength() == null) {
+            queryParams.setLength(1000);
+        }
+        
+        try {
+            // 将DTO转换为Map
+            Map<String, Object> paramMap = new HashMap<>();
+            paramMap.put("offset", queryParams.getOffset());
+            paramMap.put("length", queryParams.getLength());
+            
+            if (queryParams.getUpdateTimeStart() != null) {
+                paramMap.put("update_time_start", queryParams.getUpdateTimeStart());
+            }
+            if (queryParams.getUpdateTimeEnd() != null) {
+                paramMap.put("update_time_end", queryParams.getUpdateTimeEnd());
+            }
+            if (queryParams.getCreateTimeStart() != null) {
+                paramMap.put("create_time_start", queryParams.getCreateTimeStart());
+            }
+            if (queryParams.getCreateTimeEnd() != null) {
+                paramMap.put("create_time_end", queryParams.getCreateTimeEnd());
+            }
+            if (CollUtil.isNotEmpty(queryParams.getSkuList())) {
+                paramMap.put("sku_list", queryParams.getSkuList());
+            }
+            if (CollUtil.isNotEmpty(queryParams.getSkuIdentifierList())) {
+                paramMap.put("sku_identifier_list", queryParams.getSkuIdentifierList());
+            }
+            
+            // 调用领星API
+            String apiPath = "/erp/sc/routing/data/local_inventory/productList";
+            String responseJson = sendPostRequest(apiPath, paramMap);
+            
+            if (StrUtil.isBlank(responseJson)) {
+                log.error("产品列表API响应为空");
+                return null;
+            }
+            
+            // 解析响应
+            ProductListResponseDTO response = objectMapper.readValue(responseJson, ProductListResponseDTO.class);
+            
+            if (response != null && response.getCode() == 0) {
+                log.info("成功获取产品列表，数量: {}", response.getData() != null ? response.getData().size() : 0);
+            } else {
+                log.error("获取产品列表失败: {}", response != null ? response.getMsg() : "响应为空");
+            }
+            
+            return response;
+            
+        } catch (Exception e) {
+            log.error("查询产品列表异常", e);
+            return null;
+        }
+    }
+    
+    @Override
+    public List<ProductListDTO> getAllProductList() {
+        log.info("开始批量获取所有产品列表");
+        
+        List<ProductListDTO> allProducts = new ArrayList<>();
+        int offset = 0;
+        int length = 1000;
+        boolean hasMore = true;
+        
+        while (hasMore) {
+            ProductListQueryDTO queryParams = new ProductListQueryDTO();
+            queryParams.setOffset(offset);
+            queryParams.setLength(length);
+            
+            try {
+                ProductListResponseDTO response = getProductList(queryParams);
+                
+                if (response != null && response.getCode() == 0 && response.getData() != null) {
+                    List<ProductListDTO> products = response.getData();
+                    allProducts.addAll(products);
+                    
+                    log.info("获取产品列表批次，offset: {}, 获取数量: {}", offset, products.size());
+                    
+                    // 判断是否还有更多数据
+                    if (products.size() < length) {
+                        hasMore = false;
+                    } else {
+                        offset += length;
+                    }
+                } else {
+                    log.warn("获取产品列表批次失败，offset: {}", offset);
+                    hasMore = false;
+                }
+            } catch (Exception e) {
+                log.error("获取产品列表批次异常，offset: {}", offset, e);
+                hasMore = false;
+            }
+        }
+        
+        log.info("完成批量获取所有产品列表，总数量: {}", allProducts.size());
+        
+        // 更新缓存
+        refreshCacheWithProducts(allProducts);
+        
+        return allProducts;
+    }
+    
+    @Override
+    public Map<String, String> getSpuBySku(String sku) {
+        if (StrUtil.isBlank(sku)) {
+            return null;
+        }
+        
+        // 先从缓存获取
+        cacheLock.lock();
+        try {
+            if (skuSpuCache.containsKey(sku)) {
+                return skuSpuCache.get(sku);
+            }
+        } finally {
+            cacheLock.unlock();
+        }
+        
+        // 缓存没有，从API获取
+        ProductListQueryDTO queryParams = new ProductListQueryDTO();
+        queryParams.setSkuList(List.of(sku));
+        
+        try {
+            ProductListResponseDTO response = getProductList(queryParams);
+            
+            if (response != null && response.getCode() == 0 && response.getData() != null && !response.getData().isEmpty()) {
+                ProductListDTO product = response.getData().get(0);
+                Map<String, String> spuInfo = new HashMap<>();
+                spuInfo.put("spu", product.getSpu());
+                spuInfo.put("productName", product.getProductName());
+                
+                // 更新缓存
+                cacheLock.lock();
+                try {
+                    skuSpuCache.put(sku, spuInfo);
+                } finally {
+                    cacheLock.unlock();
+                }
+                
+                return spuInfo;
+            }
+        } catch (Exception e) {
+            log.error("查询SKU [{}] 的SPU信息异常", sku, e);
+        }
+        
+        return null;
+    }
+    
+    @Override
+    public Map<String, Map<String, String>> getSpuBySkuBatch(List<String> skuList) {
+        if (CollUtil.isEmpty(skuList)) {
+            return new HashMap<>();
+        }
+        
+        Map<String, Map<String, String>> result = new HashMap<>();
+        List<String> notInCacheSkus = new ArrayList<>();
+        
+        // 先从缓存获取
+        cacheLock.lock();
+        try {
+            for (String sku : skuList) {
+                if (skuSpuCache.containsKey(sku)) {
+                    result.put(sku, skuSpuCache.get(sku));
+                } else {
+                    notInCacheSkus.add(sku);
+                }
+            }
+        } finally {
+            cacheLock.unlock();
+        }
+        
+        // 缓存没有的，从API批量获取
+        if (!notInCacheSkus.isEmpty()) {
+            ProductListQueryDTO queryParams = new ProductListQueryDTO();
+            queryParams.setSkuList(notInCacheSkus);
+            
+            try {
+                ProductListResponseDTO response = getProductList(queryParams);
+                
+                if (response != null && response.getCode() == 0 && response.getData() != null) {
+                    for (ProductListDTO product : response.getData()) {
+                        Map<String, String> spuInfo = new HashMap<>();
+                        spuInfo.put("spu", product.getSpu());
+                        spuInfo.put("productName", product.getProductName());
+                        result.put(product.getSku(), spuInfo);
+                    }
+                    
+                    // 更新缓存
+                    cacheLock.lock();
+                    try {
+                        for (ProductListDTO product : response.getData()) {
+                            Map<String, String> spuInfo = new HashMap<>();
+                            spuInfo.put("spu", product.getSpu());
+                            spuInfo.put("productName", product.getProductName());
+                            skuSpuCache.put(product.getSku(), spuInfo);
+                        }
+                    } finally {
+                        cacheLock.unlock();
+                    }
+                }
+            } catch (Exception e) {
+                log.error("批量查询SKU的SPU信息异常", e);
+            }
+        }
+        
+        return result;
+    }
+    
+    @Override
+    public void refreshSkuSpuCache() {
+        log.info("开始刷新SKU-SPU映射缓存");
+        List<ProductListDTO> allProducts = getAllProductList();
+        refreshCacheWithProducts(allProducts);
+        log.info("SKU-SPU映射缓存刷新完成，缓存数量: {}", skuSpuCache.size());
+    }
+    
+    /**
+     * 使用产品列表更新缓存
+     * 
+     * @param products 产品列表
+     */
+    private void refreshCacheWithProducts(List<ProductListDTO> products) {
+        if (CollUtil.isEmpty(products)) {
+            return;
+        }
+        
+        cacheLock.lock();
+        try {
+            skuSpuCache.clear();
+            for (ProductListDTO product : products) {
+                if (StrUtil.isNotBlank(product.getSku())) {
+                    Map<String, String> spuInfo = new HashMap<>();
+                    spuInfo.put("spu", product.getSpu());
+                    spuInfo.put("productName", product.getProductName());
+                    skuSpuCache.put(product.getSku(), spuInfo);
+                }
+            }
+            log.info("更新SKU-SPU缓存完成，缓存大小: {}", skuSpuCache.size());
+        } finally {
+            cacheLock.unlock();
         }
     }
 } 

@@ -65,5 +65,13 @@ public class KeywordTaskRespVO {
 
     @Schema(description = "结束时间")
     private LocalDateTime endTime;
+    
+    @Schema(description = "店铺ID")
+    @ExcelProperty("店铺ID")
+    private Long shopId;
+    
+    @Schema(description = "产品")
+    @ExcelProperty("产品")
+    private String product;
 
 }

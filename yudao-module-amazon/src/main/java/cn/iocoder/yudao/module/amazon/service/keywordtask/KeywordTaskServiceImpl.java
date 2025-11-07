@@ -11,6 +11,7 @@ import cn.iocoder.yudao.module.amazon.dal.dataobject.listingprice.ListingPriceDO
 import cn.iocoder.yudao.module.amazon.service.lingXingAPI.LingXingApiService;
 import cn.iocoder.yudao.module.amazon.service.listingprice.ListingPriceService;
 import cn.iocoder.yudao.module.amazon.service.asinreview.AsinReviewService;
+import cn.iocoder.yudao.module.amazon.service.feishu.FeishuNotificationService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,8 @@ public class KeywordTaskServiceImpl implements KeywordTaskService {
     private ListingPriceService listingPriceService;
     @Autowired
     private AsinReviewService asinReviewService;
+    @Autowired
+    private FeishuNotificationService feishuNotificationService;
 
     private List<Long> SID_LIST = List.of(
             9366L, 4970L, 10045L, 10049L, 10046L, 4975L,
@@ -68,6 +71,22 @@ public class KeywordTaskServiceImpl implements KeywordTaskService {
 
     @Override
     public Long createKeywordTask(KeywordTaskSaveReqVO createReqVO) {
+        // 检查用户活跃任务数量
+        KeywordTaskPageReqVO pageReqVO = new KeywordTaskPageReqVO();
+        pageReqVO.setUserId(createReqVO.getUserId());
+
+        pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE); // 查询所有
+        pageReqVO.setEnabled((short)0);
+
+        // 查询用户的活跃任务（非删除状态）
+        PageResult<KeywordTaskDO> activeTasksPage = keywordTaskMapper.selectPage(pageReqVO);
+        long activeTaskCount = activeTasksPage.getTotal();
+        
+        // 如果活跃任务数量达到或超过3个，抛出异常
+        if (activeTaskCount >= 3) {
+            throw exception(KEYWORD_TASK_EXCEED_LIMIT);
+        }
+        
         // 插入
         KeywordTaskDO keywordTask = BeanUtils.toBean(createReqVO, KeywordTaskDO.class);
         keywordTaskMapper.insert(keywordTask);
@@ -95,6 +114,24 @@ public class KeywordTaskServiceImpl implements KeywordTaskService {
                 result.append(resStr);
             }
             log.info("<OK>[{}]<OK>", result);
+            
+            // 发送飞书通知 - 任务创建成功
+            // 已禁用飞书通知 - ultrathink 要求去掉
+            // try {
+            //     String taskTypeName = keywordTask.getScraperType() == 1 ? "关键词排名监控" :
+            //                          keywordTask.getScraperType() == 2 ? "价格监控" :
+            //                          keywordTask.getScraperType() == 4 ? "评论监控" : "其他";
+            //     feishuNotificationService.notifyTaskComplete(
+            //         "任务创建成功",
+            //         String.format("任务类型: %s", taskTypeName),
+            //         String.format("任务ID: %d, 任务名称: %s, ASIN列表: %s", 
+            //             keywordTask.getId(), 
+            //             keywordTask.getTaskName(),
+            //             keywordTask.getAsins())
+            //     );
+            // } catch (Exception e) {
+            //     log.error("发送飞书通知失败", e);
+            // }
         }
 
         // 返回
@@ -105,8 +142,18 @@ public class KeywordTaskServiceImpl implements KeywordTaskService {
     public void updateKeywordTask(KeywordTaskSaveReqVO updateReqVO) {
         // 校验存在
         validateKeywordTaskExists(updateReqVO.getId());
-        // 更新
+        
+        // 获取原任务信息，保留不应被修改的字段
+        KeywordTaskDO existingTask = keywordTaskMapper.selectById(updateReqVO.getId());
+        
+        // 更新允许修改的字段
         KeywordTaskDO updateObj = BeanUtils.toBean(updateReqVO, KeywordTaskDO.class);
+        // 保留原有的userId，防止用户修改任务所属用户
+        updateObj.setUserId(existingTask.getUserId());
+        // 保留创建时间等审计字段
+        updateObj.setCreateTime(existingTask.getCreateTime());
+        updateObj.setCreator(existingTask.getCreator());
+        
         keywordTaskMapper.updateById(updateObj);
     }
 
@@ -114,12 +161,7 @@ public class KeywordTaskServiceImpl implements KeywordTaskService {
     public void updateKeywordTaskStatus(@Valid KeywordTaskUpdateStatusReqVO updateStatusReqVO) {
         // 校验存在
         validateKeywordTaskExists(updateStatusReqVO.getId());
-//        KeywordTaskDO updateObj = new KeywordTaskDO();
-//        updateObj.setEnabled(updateStatusReqVO.getEnabled());
-//        UpdateWrapper<KeywordTaskDO> whereWrapper = new UpdateWrapper<>();
-//        whereWrapper.eq("id", updateStatusReqVO.getId());
-//        keywordTaskMapper.update(updateObj, whereWrapper);
-
+        
         KeywordTaskDO keywordTaskDO = keywordTaskMapper.selectById(updateStatusReqVO.getId());
         keywordTaskDO.setEnabled(updateStatusReqVO.getEnabled());
         keywordTaskMapper.updateById(keywordTaskDO);
@@ -229,7 +271,20 @@ public class KeywordTaskServiceImpl implements KeywordTaskService {
             }
         });
 
-        return String.format("价格定时任务执行， 共 %d 个任务，新增 %d 条记录。",list.size(),  count.get());
+        String resultMessage = String.format("价格定时任务执行， 共 %d 个任务，新增 %d 条记录。",list.size(),  count.get());
+        
+        // 发送飞书通知 - 价格监控任务执行完成
+        try {
+            feishuNotificationService.notifyDataSyncSuccess(
+                "价格监控数据",
+                count.get(),
+                0 // 这里可以记录实际耗时
+            );
+        } catch (Exception e) {
+            log.error("发送飞书通知失败", e);
+        }
+        
+        return resultMessage;
     }
 
     @Override
@@ -290,6 +345,27 @@ public class KeywordTaskServiceImpl implements KeywordTaskService {
             totalTasks, successTasks, errorTasks, totalProcessedAsins);
         
         log.info(finalResult);
+        
+        // 发送飞书通知 - 评论监控任务执行结果
+        // 已禁用飞书通知 - ultrathink 要求去掉
+        // try {
+        //     if (errorTasks > 0) {
+        //         feishuNotificationService.notifyTaskFailed(
+        //             "评论监控定时任务",
+        //             String.format("部分任务执行失败，成功 %d 个，失败 %d 个", successTasks, errorTasks),
+        //             finalResult
+        //         );
+        //     } else {
+        //         feishuNotificationService.notifyTaskComplete(
+        //             "评论监控定时任务",
+        //             String.format("全部任务执行成功，共 %d 个任务", successTasks),
+        //             String.format("成功处理 %d 个ASIN的评论数据", totalProcessedAsins)
+        //         );
+        //     }
+        // } catch (Exception e) {
+        //     log.error("发送飞书通知失败", e);
+        // }
+        
         return finalResult;
     }
 

@@ -69,6 +69,14 @@ public class AuthController {
         return success(authService.login(reqVO));
     }
 
+
+    @PostMapping("/login-amzmoss")
+    @PermitAll
+    @Operation(summary = "使用账号密码登录")
+    public CommonResult<AuthLoginRespVO> loginAmzmoss(@RequestBody @Valid AuthLoginReqVO reqVO) {
+        return success(authService.loginAmzmoss(reqVO));
+    }
+
     @PostMapping("/logout")
     @PermitAll
     @Operation(summary = "登出系统")

@@ -1,0 +1,568 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.iocoder.yudao.module.amazon.dal.mysql.productperformance.ProductPerformanceMapper">
+
+    <!-- 批量插入或更新 -->
+    <insert id="insertOrUpdateBatch" parameterType="list">
+        INSERT INTO amazon_product_performance (
+            asin, parent_asin, msku, sku, spu, sid, mid, seller_name, country, currency_code, currency_icon,
+            item_name, small_image_url, amazon_url, price, status,
+            volume, order_items, amount, net_amount, avg_custom_price, avg_volume,
+            volume_chain, volume_chain_ratio, amount_chain, amount_chain_ratio, order_items_chain, order_chain_ratio,
+            promotion_volume, promotion_amount, promotion_order_items, promotion_discount,
+            gross_profit, predict_gross_profit, gross_margin, predict_gross_margin, roi,
+            reviews_count, avg_star, prev_star, comment_rate,
+            return_count, return_rate, return_goods_count, return_goods_rate, return_amount,
+            afn_fulfillable_quantity, afn_inbound_receiving_quantity, afn_inbound_shipped_quantity,
+            afn_inbound_working_quantity, afn_unsellable_quantity, reserved_fc_processing,
+            reserved_fc_transfers, fbm_quantity, reserved_customerorders, stock_up_num,
+            available_days, fbm_available_days, month_stock_sales_ratio, inventory_sales_ratio,
+            clicks, sessions, sessions_mobile, sessions_total, page_views, page_views_mobile,
+            page_views_total, buy_box_percentage,
+            cvr, ctr, volume_cvr, ad_cvr,
+            impressions, ad_clicks, ad_order_quantity, ad_sales_amount, spend,
+            cpc, cpm, cpo, acos, acoas, roas, asoas, adv_rate, tacos,
+            ads_sp_cost, ads_sp_sales, ads_sd_cost, ads_sd_sales,
+            shared_ads_sb_cost, shared_ads_sb_sales, shared_ads_sbv_cost, shared_ads_sbv_sales,
+            shared_cost_of_advertising, ad_direct_sales_amount, ad_direct_order_quantity,
+            cate_rank, prev_cate_rank, rank_category, 
+            small_cate_rank, prev_small_cate_rank, small_rank_category, small_cate_rank_detail,
+            categories, brands, principal_names, developer_names, suppliers, attributes, tag_set, price_list,
+            local_name, cg_price, whs_value, local_quantity, oversea_quantity, avg_landed_price, model,
+            summary_field, start_date, end_date, sync_time,
+            prime_price, coupon_price, coupon_discount, target_orders, promotion_activity,
+            keyword_count, p1_keywords, p2_keywords, p3_keywords, total_traffic, total_sales_amount,
+            inventory_age_0_90, inventory_age_91_180, inventory_age_180_plus,
+            inv_age_181_to_270_days, inv_age_271_to_365_days, inv_age_365_plus_days, record_date,
+            expected_redundant_products, storage_fee_30_days,
+            storage_fee_180_365_quantity, storage_fee_180_365_amount,
+            break_even_tacos, operational_analysis,
+            creator, create_time, updater, update_time, deleted, tenant_id
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+        (
+            #{item.asin}, #{item.parentAsin}, #{item.msku}, #{item.sku}, #{item.spu}, #{item.sid}, #{item.mid},
+            #{item.sellerName}, #{item.country}, #{item.currencyCode}, #{item.currencyIcon},
+            #{item.itemName}, #{item.smallImageUrl}, #{item.amazonUrl}, #{item.price}, #{item.status},
+            #{item.volume}, #{item.orderItems}, #{item.amount}, #{item.netAmount}, 
+            #{item.avgCustomPrice}, #{item.avgVolume},
+            #{item.volumeChain}, #{item.volumeChainRatio}, #{item.amountChain}, #{item.amountChainRatio},
+            #{item.orderItemsChain}, #{item.orderChainRatio},
+            #{item.promotionVolume}, #{item.promotionAmount}, #{item.promotionOrderItems}, #{item.promotionDiscount},
+            #{item.grossProfit}, #{item.predictGrossProfit}, #{item.grossMargin}, #{item.predictGrossMargin}, #{item.roi},
+            #{item.reviewsCount}, #{item.avgStar}, #{item.prevStar}, #{item.commentRate},
+            #{item.returnCount}, #{item.returnRate}, #{item.returnGoodsCount}, #{item.returnGoodsRate}, #{item.returnAmount},
+            #{item.afnFulfillableQuantity}, #{item.afnInboundReceivingQuantity}, #{item.afnInboundShippedQuantity},
+            #{item.afnInboundWorkingQuantity}, #{item.afnUnsellableQuantity}, #{item.reservedFcProcessing},
+            #{item.reservedFcTransfers}, #{item.fbmQuantity}, #{item.reservedCustomerorders}, #{item.stockUpNum},
+            #{item.availableDays}, #{item.fbmAvailableDays}, #{item.monthStockSalesRatio}, #{item.inventorySalesRatio},
+            #{item.clicks}, #{item.sessions}, #{item.sessionsMobile}, #{item.sessionsTotal},
+            #{item.pageViews}, #{item.pageViewsMobile}, #{item.pageViewsTotal}, #{item.buyBoxPercentage},
+            #{item.cvr}, #{item.ctr}, #{item.volumeCvr}, #{item.adCvr},
+            #{item.impressions}, #{item.adClicks}, #{item.adOrderQuantity}, #{item.adSalesAmount}, #{item.spend},
+            #{item.cpc}, #{item.cpm}, #{item.cpo}, #{item.acos}, #{item.acoas}, #{item.roas}, #{item.asoas},
+            #{item.advRate}, #{item.tacos},
+            #{item.adsSpCost}, #{item.adsSpSales}, #{item.adsSdCost}, #{item.adsSdSales},
+            #{item.sharedAdsSbCost}, #{item.sharedAdsSbSales}, #{item.sharedAdsSbvCost}, #{item.sharedAdsSbvSales},
+            #{item.sharedCostOfAdvertising}, #{item.adDirectSalesAmount}, #{item.adDirectOrderQuantity},
+            #{item.cateRank}, #{item.prevCateRank}, #{item.rankCategory},
+            #{item.smallCateRank}, #{item.prevSmallCateRank}, #{item.smallRankCategory},
+            #{item.smallCateRankDetail, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.categories, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.brands, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.principalNames, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.developerNames, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.suppliers, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.attributes, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.tagSet, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.priceList, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.localName}, #{item.cgPrice}, #{item.whsValue}, #{item.localQuantity},
+            #{item.overseaQuantity}, #{item.avgLandedPrice},
+            #{item.model, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.summaryField}, #{item.startDate}, #{item.endDate}, #{item.syncTime},
+            #{item.primePrice}, #{item.couponPrice}, #{item.couponDiscount}, #{item.targetOrders}, #{item.promotionActivity},
+            #{item.keywordCount}, #{item.p1Keywords}, #{item.p2Keywords}, #{item.p3Keywords},
+            #{item.totalTraffic}, #{item.totalSalesAmount},
+            #{item.inventoryAge0To90}, #{item.inventoryAge91To180}, #{item.inventoryAge180Plus},
+            #{item.invAge181To270Days}, #{item.invAge271To365Days}, #{item.invAge365PlusDays}, #{item.recordDate},
+            #{item.expectedRedundantProducts}, #{item.storageFee30Days},
+            #{item.storageFee180To365Quantity}, #{item.storageFee180To365Amount},
+            #{item.breakEvenTacos}, #{item.operationalAnalysis},
+            #{item.creator}, #{item.createTime}, #{item.updater}, #{item.updateTime}, 
+            <choose>
+                <when test="item.deleted != null and item.deleted == true">1</when>
+                <when test="item.deleted != null and item.deleted == false">0</when>
+                <otherwise>0</otherwise>
+            </choose>, 
+            #{item.tenantId}
+        )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            parent_asin = VALUES(parent_asin),
+            msku = VALUES(msku),
+            sku = VALUES(sku),
+            spu = VALUES(spu),
+            mid = VALUES(mid),
+            seller_name = VALUES(seller_name),
+            country = VALUES(country),
+            currency_code = VALUES(currency_code),
+            currency_icon = VALUES(currency_icon),
+            item_name = VALUES(item_name),
+            small_image_url = VALUES(small_image_url),
+            amazon_url = VALUES(amazon_url),
+            price = VALUES(price),
+            status = VALUES(status),
+            volume = VALUES(volume),
+            order_items = VALUES(order_items),
+            amount = VALUES(amount),
+            net_amount = VALUES(net_amount),
+            avg_custom_price = VALUES(avg_custom_price),
+            avg_volume = VALUES(avg_volume),
+            volume_chain = VALUES(volume_chain),
+            volume_chain_ratio = VALUES(volume_chain_ratio),
+            amount_chain = VALUES(amount_chain),
+            amount_chain_ratio = VALUES(amount_chain_ratio),
+            order_items_chain = VALUES(order_items_chain),
+            order_chain_ratio = VALUES(order_chain_ratio),
+            promotion_volume = VALUES(promotion_volume),
+            promotion_amount = VALUES(promotion_amount),
+            promotion_order_items = VALUES(promotion_order_items),
+            promotion_discount = VALUES(promotion_discount),
+            gross_profit = VALUES(gross_profit),
+            predict_gross_profit = VALUES(predict_gross_profit),
+            gross_margin = VALUES(gross_margin),
+            predict_gross_margin = VALUES(predict_gross_margin),
+            roi = VALUES(roi),
+            reviews_count = VALUES(reviews_count),
+            avg_star = VALUES(avg_star),
+            prev_star = VALUES(prev_star),
+            comment_rate = VALUES(comment_rate),
+            return_count = VALUES(return_count),
+            return_rate = VALUES(return_rate),
+            return_goods_count = VALUES(return_goods_count),
+            return_goods_rate = VALUES(return_goods_rate),
+            return_amount = VALUES(return_amount),
+            afn_fulfillable_quantity = VALUES(afn_fulfillable_quantity),
+            afn_inbound_receiving_quantity = VALUES(afn_inbound_receiving_quantity),
+            afn_inbound_shipped_quantity = VALUES(afn_inbound_shipped_quantity),
+            afn_inbound_working_quantity = VALUES(afn_inbound_working_quantity),
+            afn_unsellable_quantity = VALUES(afn_unsellable_quantity),
+            reserved_fc_processing = VALUES(reserved_fc_processing),
+            reserved_fc_transfers = VALUES(reserved_fc_transfers),
+            fbm_quantity = VALUES(fbm_quantity),
+            reserved_customerorders = VALUES(reserved_customerorders),
+            stock_up_num = VALUES(stock_up_num),
+            available_days = VALUES(available_days),
+            fbm_available_days = VALUES(fbm_available_days),
+            month_stock_sales_ratio = VALUES(month_stock_sales_ratio),
+            inventory_sales_ratio = VALUES(inventory_sales_ratio),
+            clicks = VALUES(clicks),
+            sessions = VALUES(sessions),
+            sessions_mobile = VALUES(sessions_mobile),
+            sessions_total = VALUES(sessions_total),
+            page_views = VALUES(page_views),
+            page_views_mobile = VALUES(page_views_mobile),
+            page_views_total = VALUES(page_views_total),
+            buy_box_percentage = VALUES(buy_box_percentage),
+            cvr = VALUES(cvr),
+            ctr = VALUES(ctr),
+            volume_cvr = VALUES(volume_cvr),
+            ad_cvr = VALUES(ad_cvr),
+            impressions = VALUES(impressions),
+            ad_clicks = VALUES(ad_clicks),
+            ad_order_quantity = VALUES(ad_order_quantity),
+            ad_sales_amount = VALUES(ad_sales_amount),
+            spend = VALUES(spend),
+            cpc = VALUES(cpc),
+            cpm = VALUES(cpm),
+            cpo = VALUES(cpo),
+            acos = VALUES(acos),
+            acoas = VALUES(acoas),
+            roas = VALUES(roas),
+            asoas = VALUES(asoas),
+            adv_rate = VALUES(adv_rate),
+            tacos = VALUES(tacos),
+            ads_sp_cost = VALUES(ads_sp_cost),
+            ads_sp_sales = VALUES(ads_sp_sales),
+            ads_sd_cost = VALUES(ads_sd_cost),
+            ads_sd_sales = VALUES(ads_sd_sales),
+            shared_ads_sb_cost = VALUES(shared_ads_sb_cost),
+            shared_ads_sb_sales = VALUES(shared_ads_sb_sales),
+            shared_ads_sbv_cost = VALUES(shared_ads_sbv_cost),
+            shared_ads_sbv_sales = VALUES(shared_ads_sbv_sales),
+            shared_cost_of_advertising = VALUES(shared_cost_of_advertising),
+            ad_direct_sales_amount = VALUES(ad_direct_sales_amount),
+            ad_direct_order_quantity = VALUES(ad_direct_order_quantity),
+            cate_rank = VALUES(cate_rank),
+            prev_cate_rank = VALUES(prev_cate_rank),
+            rank_category = VALUES(rank_category),
+            small_cate_rank = VALUES(small_cate_rank),
+            prev_small_cate_rank = VALUES(prev_small_cate_rank),
+            small_rank_category = VALUES(small_rank_category),
+            small_cate_rank_detail = VALUES(small_cate_rank_detail),
+            categories = VALUES(categories),
+            brands = VALUES(brands),
+            principal_names = VALUES(principal_names),
+            developer_names = VALUES(developer_names),
+            suppliers = VALUES(suppliers),
+            attributes = VALUES(attributes),
+            tag_set = VALUES(tag_set),
+            price_list = VALUES(price_list),
+            local_name = VALUES(local_name),
+            cg_price = VALUES(cg_price),
+            whs_value = VALUES(whs_value),
+            local_quantity = VALUES(local_quantity),
+            oversea_quantity = VALUES(oversea_quantity),
+            avg_landed_price = VALUES(avg_landed_price),
+            model = VALUES(model),
+            sync_time = VALUES(sync_time),
+            prime_price = VALUES(prime_price),
+            coupon_price = VALUES(coupon_price),
+            coupon_discount = VALUES(coupon_discount),
+            target_orders = VALUES(target_orders),
+            promotion_activity = VALUES(promotion_activity),
+            keyword_count = VALUES(keyword_count),
+            p1_keywords = VALUES(p1_keywords),
+            p2_keywords = VALUES(p2_keywords),
+            p3_keywords = VALUES(p3_keywords),
+            total_traffic = VALUES(total_traffic),
+            total_sales_amount = VALUES(total_sales_amount),
+            inventory_age_0_90 = VALUES(inventory_age_0_90),
+            inventory_age_91_180 = VALUES(inventory_age_91_180),
+            inventory_age_180_plus = VALUES(inventory_age_180_plus),
+            inv_age_181_to_270_days = VALUES(inv_age_181_to_270_days),
+            inv_age_271_to_365_days = VALUES(inv_age_271_to_365_days),
+            inv_age_365_plus_days = VALUES(inv_age_365_plus_days),
+            record_date = VALUES(record_date),
+            expected_redundant_products = VALUES(expected_redundant_products),
+            storage_fee_30_days = VALUES(storage_fee_30_days),
+            storage_fee_180_365_quantity = VALUES(storage_fee_180_365_quantity),
+            storage_fee_180_365_amount = VALUES(storage_fee_180_365_amount),
+            break_even_tacos = VALUES(break_even_tacos),
+            operational_analysis = VALUES(operational_analysis),
+            updater = VALUES(updater),
+            update_time = VALUES(update_time)
+    </insert>
+
+    <!-- 批量插入 -->
+    <insert id="insertBatch" parameterType="list">
+        INSERT INTO amazon_product_performance (
+            asin, parent_asin, msku, sku, spu, sid, mid, seller_name, country, currency_code, currency_icon,
+            item_name, small_image_url, amazon_url, price, status,
+            volume, order_items, amount, net_amount, avg_custom_price, avg_volume,
+            volume_chain, volume_chain_ratio, amount_chain, amount_chain_ratio, order_items_chain, order_chain_ratio,
+            promotion_volume, promotion_amount, promotion_order_items, promotion_discount,
+            gross_profit, predict_gross_profit, gross_margin, predict_gross_margin, roi,
+            reviews_count, avg_star, prev_star, comment_rate,
+            return_count, return_rate, return_goods_count, return_goods_rate, return_amount,
+            afn_fulfillable_quantity, afn_inbound_receiving_quantity, afn_inbound_shipped_quantity,
+            afn_inbound_working_quantity, afn_unsellable_quantity, reserved_fc_processing,
+            reserved_fc_transfers, fbm_quantity, reserved_customerorders, stock_up_num,
+            available_days, fbm_available_days, month_stock_sales_ratio, inventory_sales_ratio,
+            clicks, sessions, sessions_mobile, sessions_total, page_views, page_views_mobile,
+            page_views_total, buy_box_percentage,
+            cvr, ctr, volume_cvr, ad_cvr,
+            impressions, ad_clicks, ad_order_quantity, ad_sales_amount, spend,
+            cpc, cpm, cpo, acos, acoas, roas, asoas, adv_rate, tacos,
+            ads_sp_cost, ads_sp_sales, ads_sd_cost, ads_sd_sales,
+            shared_ads_sb_cost, shared_ads_sb_sales, shared_ads_sbv_cost, shared_ads_sbv_sales,
+            shared_cost_of_advertising, ad_direct_sales_amount, ad_direct_order_quantity,
+            cate_rank, prev_cate_rank, rank_category, 
+            small_cate_rank, prev_small_cate_rank, small_rank_category, small_cate_rank_detail,
+            categories, brands, principal_names, developer_names, suppliers, attributes, tag_set, price_list,
+            local_name, cg_price, whs_value, local_quantity, oversea_quantity, avg_landed_price, model,
+            summary_field, start_date, end_date, sync_time,
+            prime_price, coupon_price, coupon_discount, target_orders, promotion_activity,
+            keyword_count, p1_keywords, p2_keywords, p3_keywords, total_traffic, total_sales_amount,
+            inventory_age_0_90, inventory_age_91_180, inventory_age_180_plus,
+            inv_age_181_to_270_days, inv_age_271_to_365_days, inv_age_365_plus_days, record_date,
+            expected_redundant_products, storage_fee_30_days,
+            storage_fee_180_365_quantity, storage_fee_180_365_amount,
+            break_even_tacos, operational_analysis,
+            creator, create_time, updater, update_time, deleted, tenant_id
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+        (
+            #{item.asin}, #{item.parentAsin}, #{item.msku}, #{item.sku}, #{item.spu}, #{item.sid}, #{item.mid},
+            #{item.sellerName}, #{item.country}, #{item.currencyCode}, #{item.currencyIcon},
+            #{item.itemName}, #{item.smallImageUrl}, #{item.amazonUrl}, #{item.price}, #{item.status},
+            #{item.volume}, #{item.orderItems}, #{item.amount}, #{item.netAmount}, 
+            #{item.avgCustomPrice}, #{item.avgVolume},
+            #{item.volumeChain}, #{item.volumeChainRatio}, #{item.amountChain}, #{item.amountChainRatio},
+            #{item.orderItemsChain}, #{item.orderChainRatio},
+            #{item.promotionVolume}, #{item.promotionAmount}, #{item.promotionOrderItems}, #{item.promotionDiscount},
+            #{item.grossProfit}, #{item.predictGrossProfit}, #{item.grossMargin}, #{item.predictGrossMargin}, #{item.roi},
+            #{item.reviewsCount}, #{item.avgStar}, #{item.prevStar}, #{item.commentRate},
+            #{item.returnCount}, #{item.returnRate}, #{item.returnGoodsCount}, #{item.returnGoodsRate}, #{item.returnAmount},
+            #{item.afnFulfillableQuantity}, #{item.afnInboundReceivingQuantity}, #{item.afnInboundShippedQuantity},
+            #{item.afnInboundWorkingQuantity}, #{item.afnUnsellableQuantity}, #{item.reservedFcProcessing},
+            #{item.reservedFcTransfers}, #{item.fbmQuantity}, #{item.reservedCustomerorders}, #{item.stockUpNum},
+            #{item.availableDays}, #{item.fbmAvailableDays}, #{item.monthStockSalesRatio}, #{item.inventorySalesRatio},
+            #{item.clicks}, #{item.sessions}, #{item.sessionsMobile}, #{item.sessionsTotal},
+            #{item.pageViews}, #{item.pageViewsMobile}, #{item.pageViewsTotal}, #{item.buyBoxPercentage},
+            #{item.cvr}, #{item.ctr}, #{item.volumeCvr}, #{item.adCvr},
+            #{item.impressions}, #{item.adClicks}, #{item.adOrderQuantity}, #{item.adSalesAmount}, #{item.spend},
+            #{item.cpc}, #{item.cpm}, #{item.cpo}, #{item.acos}, #{item.acoas}, #{item.roas}, #{item.asoas},
+            #{item.advRate}, #{item.tacos},
+            #{item.adsSpCost}, #{item.adsSpSales}, #{item.adsSdCost}, #{item.adsSdSales},
+            #{item.sharedAdsSbCost}, #{item.sharedAdsSbSales}, #{item.sharedAdsSbvCost}, #{item.sharedAdsSbvSales},
+            #{item.sharedCostOfAdvertising}, #{item.adDirectSalesAmount}, #{item.adDirectOrderQuantity},
+            #{item.cateRank}, #{item.prevCateRank}, #{item.rankCategory},
+            #{item.smallCateRank}, #{item.prevSmallCateRank}, #{item.smallRankCategory},
+            #{item.smallCateRankDetail, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.categories, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.brands, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.principalNames, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.developerNames, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.suppliers, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.attributes, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.tagSet, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.priceList, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.localName}, #{item.cgPrice}, #{item.whsValue}, #{item.localQuantity},
+            #{item.overseaQuantity}, #{item.avgLandedPrice},
+            #{item.model, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER}::jsonb,
+            #{item.summaryField}, #{item.startDate}, #{item.endDate}, #{item.syncTime},
+            #{item.primePrice}, #{item.couponPrice}, #{item.couponDiscount}, #{item.targetOrders}, #{item.promotionActivity},
+            #{item.keywordCount}, #{item.p1Keywords}, #{item.p2Keywords}, #{item.p3Keywords},
+            #{item.totalTraffic}, #{item.totalSalesAmount},
+            #{item.inventoryAge0To90}, #{item.inventoryAge91To180}, #{item.inventoryAge180Plus},
+            #{item.invAge181To270Days}, #{item.invAge271To365Days}, #{item.invAge365PlusDays}, #{item.recordDate},
+            #{item.expectedRedundantProducts}, #{item.storageFee30Days},
+            #{item.storageFee180To365Quantity}, #{item.storageFee180To365Amount},
+            #{item.breakEvenTacos}, #{item.operationalAnalysis},
+            #{item.creator}, #{item.createTime}, #{item.updater}, #{item.updateTime}, 
+            <choose>
+                <when test="item.deleted != null and item.deleted == true">1</when>
+                <when test="item.deleted != null and item.deleted == false">0</when>
+                <otherwise>0</otherwise>
+            </choose>, 
+            #{item.tenantId}
+        )
+        </foreach>
+    </insert>
+
+    <!-- 物理删除（绕过逻辑删除） -->
+    <delete id="physicalDelete">
+        DELETE FROM amazon_product_performance 
+        WHERE asin = #{asin}
+          AND sid = #{sid}
+          AND start_date = #{startDate}
+          AND end_date = #{endDate}
+          AND summary_field = #{summaryField}
+          AND deleted = 0
+    </delete>
+
+    <!-- 按SPU分组查询分页数据 -->
+    <select id="selectPageGroupBySpu" resultType="cn.iocoder.yudao.module.amazon.dal.dataobject.productperformance.ProductPerformanceDO">
+        SELECT 
+            MIN(id) as id,
+            STRING_AGG(DISTINCT asin, ',') as asin,
+            spu,
+            sid,
+            mid,
+            MIN(seller_name) as seller_name,
+            MIN(country) as country,
+            MIN(currency_code) as currency_code,
+            MIN(currency_icon) as currency_icon,
+            STRING_AGG(DISTINCT item_name, ' | ') as item_name,
+            MIN(small_image_url) as small_image_url,
+            MIN(amazon_url) as amazon_url,
+            MIN(price) as price,
+            MIN(status) as status,
+            
+            -- 销售相关数据汇总
+            SUM(volume) as volume,
+            SUM(order_items) as order_items,
+            SUM(amount) as amount,
+            SUM(net_amount) as net_amount,
+            AVG(avg_custom_price) as avg_custom_price,
+            SUM(avg_volume) as avg_volume,
+            
+            -- 环比数据汇总
+            SUM(volume_chain) as volume_chain,
+            AVG(volume_chain_ratio) as volume_chain_ratio,
+            SUM(amount_chain) as amount_chain,
+            AVG(amount_chain_ratio) as amount_chain_ratio,
+            SUM(order_items_chain) as order_items_chain,
+            AVG(order_chain_ratio) as order_chain_ratio,
+            
+            -- 促销数据汇总
+            SUM(promotion_volume) as promotion_volume,
+            SUM(promotion_amount) as promotion_amount,
+            SUM(promotion_order_items) as promotion_order_items,
+            SUM(promotion_discount) as promotion_discount,
+            
+            -- 利润数据汇总
+            SUM(gross_profit) as gross_profit,
+            SUM(predict_gross_profit) as predict_gross_profit,
+            AVG(gross_margin) as gross_margin,
+            AVG(predict_gross_margin) as predict_gross_margin,
+            AVG(roi) as roi,
+            
+            -- 评论数据取平均
+            AVG(reviews_count) as reviews_count,
+            AVG(avg_star) as avg_star,
+            AVG(prev_star) as prev_star,
+            AVG(comment_rate) as comment_rate,
+            
+            -- 退货数据汇总
+            SUM(return_count) as return_count,
+            AVG(return_rate) as return_rate,
+            SUM(return_goods_count) as return_goods_count,
+            AVG(return_goods_rate) as return_goods_rate,
+            SUM(return_amount) as return_amount,
+            
+            -- 库存数据汇总
+            SUM(afn_fulfillable_quantity) as afn_fulfillable_quantity,
+            SUM(afn_inbound_receiving_quantity) as afn_inbound_receiving_quantity,
+            SUM(afn_inbound_shipped_quantity) as afn_inbound_shipped_quantity,
+            SUM(afn_inbound_working_quantity) as afn_inbound_working_quantity,
+            SUM(afn_unsellable_quantity) as afn_unsellable_quantity,
+            SUM(reserved_fc_processing) as reserved_fc_processing,
+            SUM(reserved_fc_transfers) as reserved_fc_transfers,
+            SUM(fbm_quantity) as fbm_quantity,
+            SUM(reserved_customerorders) as reserved_customerorders,
+            SUM(stock_up_num) as stock_up_num,
+            
+            AVG(available_days) as available_days,
+            AVG(fbm_available_days) as fbm_available_days,
+            AVG(month_stock_sales_ratio) as month_stock_sales_ratio,
+            AVG(inventory_sales_ratio) as inventory_sales_ratio,
+            
+            -- 流量数据汇总
+            SUM(clicks) as clicks,
+            SUM(sessions) as sessions,
+            SUM(sessions_mobile) as sessions_mobile,
+            SUM(sessions_total) as sessions_total,
+            SUM(page_views) as page_views,
+            SUM(page_views_mobile) as page_views_mobile,
+            SUM(page_views_total) as page_views_total,
+            AVG(buy_box_percentage) as buy_box_percentage,
+            
+            -- 转化率取平均
+            AVG(cvr) as cvr,
+            AVG(ctr) as ctr,
+            AVG(volume_cvr) as volume_cvr,
+            AVG(ad_cvr) as ad_cvr,
+            
+            -- 广告数据汇总
+            SUM(impressions) as impressions,
+            SUM(ad_clicks) as ad_clicks,
+            SUM(ad_order_quantity) as ad_order_quantity,
+            SUM(ad_sales_amount) as ad_sales_amount,
+            SUM(spend) as spend,
+            
+            AVG(cpc) as cpc,
+            AVG(cpm) as cpm,
+            AVG(cpo) as cpo,
+            AVG(acos) as acos,
+            AVG(acoas) as acoas,
+            AVG(roas) as roas,
+            AVG(asoas) as asoas,
+            AVG(adv_rate) as adv_rate,
+            AVG(tacos) as tacos,
+            
+            SUM(ads_sp_cost) as ads_sp_cost,
+            SUM(ads_sp_sales) as ads_sp_sales,
+            SUM(ads_sd_cost) as ads_sd_cost,
+            SUM(ads_sd_sales) as ads_sd_sales,
+            SUM(shared_ads_sb_cost) as shared_ads_sb_cost,
+            SUM(shared_ads_sb_sales) as shared_ads_sb_sales,
+            SUM(shared_ads_sbv_cost) as shared_ads_sbv_cost,
+            SUM(shared_ads_sbv_sales) as shared_ads_sbv_sales,
+            SUM(shared_cost_of_advertising) as shared_cost_of_advertising,
+            SUM(ad_direct_sales_amount) as ad_direct_sales_amount,
+            SUM(ad_direct_order_quantity) as ad_direct_order_quantity,
+            
+            -- 排名数据取最小值（最好的排名）
+            MIN(cate_rank) as cate_rank,
+            MIN(prev_cate_rank) as prev_cate_rank,
+            MIN(rank_category) as rank_category,
+            MIN(small_cate_rank) as small_cate_rank,
+            MIN(prev_small_cate_rank) as prev_small_cate_rank,
+            MIN(small_rank_category) as small_rank_category,
+            
+            -- 库龄数据汇总
+            SUM(inventory_age_0_90) as inventory_age_0_90,
+            SUM(inventory_age_91_180) as inventory_age_91_180,
+            SUM(inventory_age_180_plus) as inventory_age_180_plus,
+            SUM(inv_age_181_to_270_days) as inv_age_181_to_270_days,
+            SUM(inv_age_271_to_365_days) as inv_age_271_to_365_days,
+            SUM(inv_age_365_plus_days) as inv_age_365_plus_days,
+            
+            -- 日期和其他字段
+            record_date,
+            'spu' as summary_field,
+            MIN(start_date) as start_date,
+            MAX(end_date) as end_date,
+            MAX(sync_time) as sync_time,
+            
+            MIN(creator) as creator,
+            MIN(create_time) as create_time,
+            MAX(updater) as updater,
+            MAX(update_time) as update_time,
+            0 as deleted,
+            MIN(tenant_id) as tenant_id
+        FROM amazon_product_performance
+        WHERE deleted = 0
+        <if test="reqVO.spu != null and reqVO.spu != ''">
+            AND spu = #{reqVO.spu}
+        </if>
+        <if test="reqVO.sid != null">
+            AND sid = #{reqVO.sid}
+        </if>
+        <if test="reqVO.sids != null and reqVO.sids.size() > 0">
+            AND sid IN
+            <foreach collection="reqVO.sids" item="sid" open="(" separator="," close=")">
+                #{sid}
+            </foreach>
+        </if>
+        <if test="reqVO.mid != null">
+            AND mid = #{reqVO.mid}
+        </if>
+        <if test="reqVO.startDate != null">
+            AND record_date >= #{reqVO.startDate}
+        </if>
+        <if test="reqVO.endDate != null">
+            AND record_date &lt;= #{reqVO.endDate}
+        </if>
+        <if test="reqVO.itemName != null and reqVO.itemName != ''">
+            AND item_name LIKE CONCAT('%', #{reqVO.itemName}, '%')
+        </if>
+        GROUP BY spu, sid, mid, record_date
+        ORDER BY record_date DESC, SUM(volume) DESC
+        LIMIT #{reqVO.pageSize} OFFSET (#{reqVO.pageNo} - 1) * #{reqVO.pageSize}
+    </select>
+
+    <!-- 按SPU分组查询总数 -->
+    <select id="selectCountGroupBySpu" resultType="long">
+        SELECT COUNT(DISTINCT CONCAT(spu, '_', sid, '_', mid, '_', record_date))
+        FROM amazon_product_performance
+        WHERE deleted = 0
+        <if test="reqVO.spu != null and reqVO.spu != ''">
+            AND spu = #{reqVO.spu}
+        </if>
+        <if test="reqVO.sid != null">
+            AND sid = #{reqVO.sid}
+        </if>
+        <if test="reqVO.sids != null and reqVO.sids.size() > 0">
+            AND sid IN
+            <foreach collection="reqVO.sids" item="sid" open="(" separator="," close=")">
+                #{sid}
+            </foreach>
+        </if>
+        <if test="reqVO.mid != null">
+            AND mid = #{reqVO.mid}
+        </if>
+        <if test="reqVO.startDate != null">
+            AND record_date >= #{reqVO.startDate}
+        </if>
+        <if test="reqVO.endDate != null">
+            AND record_date &lt;= #{reqVO.endDate}
+        </if>
+        <if test="reqVO.itemName != null and reqVO.itemName != ''">
+            AND item_name LIKE CONCAT('%', #{reqVO.itemName}, '%')
+        </if>
+    </select>
+
+</mapper>

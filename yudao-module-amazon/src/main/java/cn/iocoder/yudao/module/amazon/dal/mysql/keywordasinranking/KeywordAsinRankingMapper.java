@@ -34,7 +34,9 @@ public interface KeywordAsinRankingMapper extends BaseMapperX<KeywordAsinRanking
                 .eqIfPresent(KeywordAsinRankingDO::getRemark, reqVO.getRemark())
                 .betweenIfPresent(KeywordAsinRankingDO::getCreateTime, reqVO.getCreateTime())
                 .eqIfPresent(KeywordAsinRankingDO::getUserId, reqVO.getUserId())
-                .eqIfPresent(KeywordAsinRankingDO::getCrawlDate, reqVO.getCrawlDate())
+                .betweenIfPresent(KeywordAsinRankingDO::getCrawlDate, 
+                        reqVO.getCrawlDate() != null ? reqVO.getCrawlDate()[0] : null,
+                        reqVO.getCrawlDate() != null ? reqVO.getCrawlDate()[1] : null)
                 .orderByDesc(KeywordAsinRankingDO::getId));
     }
 
